@@ -17,22 +17,24 @@
 <body>
 
     <h1>DK TV PREMIUM</h1>
-    <video id="skrin-tv" controls autoplay></video>
+    <video id="skrin-tv" controls autoplay muted></video>
 
-    <!-- Senarai Butang Saluran -->
+    <!-- RUANGAN ISI LINK DAN NAMA SIARAN -->
     <div class="senarai-saluran">
-        <!-- Anda boleh tambah banyak butang di sini. Ganti pautan m3u8 untuk siaran lain -->
-        <button onclick="tukarSiaran('https://d25tgymtnqzu8s.cloudfront.net/main/A0jyR3/master.m3u8?id=1')">TV1</button>
-        <button onclick="tukarSiaran('LINK_M3U8_TV2_DI_SINI')">TV2</button>
-        <button onclick="tukarSiaran('LINK_M3U8_TV3_DI_SINI')">TV3</button>
-        <button onclick="tukarSiaran('LINK_M3U8_AWANI_DI_SINI')">AWANI</button>
+        
+        <button onclick="tukarSiaran('https://d25tgymtnqzu8s.cloudfront.net/main/A0jyR3/dl_1080p.m3u8')">tv1</button>
+        <button onclick="tukarSiaran('MASUKKAN_LINK_M3U8_SIARAN_2')">NAMA SIARAN 2</button>
+        <button onclick="tukarSiaran('MASUKKAN_LINK_M3U8_SIARAN_3')">NAMA SIARAN 3</button>
+        <button onclick="tukarSiaran('MASUKKAN_LINK_M3U8_SIARAN_4')">NAMA SIARAN 4</button>
+        
+        <!-- Jika nak tambah butang, salin sebaris kod button di atas dan tampal di bawah ini -->
+        
     </div>
 
     <script>
         var video = document.getElementById('skrin-tv');
         var hls = new Hls();
 
-        // Fungsi untuk menukar siaran tanpa perlu loading page baru
         function tukarSiaran(sumberVideo) {
             if (Hls.isSupported()) {
                 hls.loadSource(sumberVideo);
@@ -44,8 +46,8 @@
             }
         }
 
-        // Ini untuk memastikan TV1 auto-play bila pelawat mula-mula buka website
-        tukarSiaran('https://d25tgymtnqzu8s.cloudfront.net/main/A0jyR3/master.m3u8?id=1');
+        // MASUKKAN LINK SIARAN PERTAMA YANG AKAN MULA BERMAIN SECARA AUTOMATIK BILA WEB DIBUKA
+        tukarSiaran('https://d25tgymtnqzu8s.cloudfront.net/main/A0jyR3/dl_1080p.m3u8');
     </script>
 </body>
 </html>
