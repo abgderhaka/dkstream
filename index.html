@@ -22,14 +22,16 @@
     <!-- RUANGAN ISI LINK DAN NAMA SIARAN -->
     <div class="senarai-saluran">
         
-        <!-- Butang Ujian Proksi (Perhatikan tiada lagi ?url=) -->
         <button onclick="tukarSiaran('https://dktv-premium.zqstore80.workers.dev/https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">UJI PROKSI</button>
 
-        <!-- Butang TV1 (Pautan RTM yang menggunakan proksi baharu) -->
-        <button onclick="tukarSiaran('https://dktv-premium.zqstore80.workers.dev/https://d25tgymtnqzu8s.cloudfront.net/main/A0jyR3/dl_1080p.m3u8')">TV1</button>
+        <!-- Pautan Awani ini sangat stabil dan biasanya tidak perlukan proksi -->
+        <button onclick="tukarSiaran('https://astroawani-ott.sec.xandr.com/out/v1/b520db7b46da43118d32785cb68b1a37/index.m3u8')">ASTRO AWANI</button>
         
-        <button onclick="tukarSiaran('MASUKKAN_LINK_M3U8_SIARAN_2')">NAMA SIARAN 2</button>
-        <button onclick="tukarSiaran('MASUKKAN_LINK_M3U8_SIARAN_3')">NAMA SIARAN 3</button>
+        <!-- Pautan alternatif TV1 (Mungkin berfungsi bergantung kepada lokasi) -->
+        <button onclick="tukarSiaran('https://rtm.glueapi.io/v1/video-api/3154/480')">TV1</button>
+        
+        <!-- Contoh pautan luar negara menggunakan proksi anda (Makkah Live) -->
+        <button onclick="tukarSiaran('https://dktv-premium.zqstore80.workers.dev/https://quranes-edge.itworks.video/playlist.m3u8')">MAKKAH LIVE</button>
         
     </div>
 
@@ -48,8 +50,8 @@
             }
         }
 
-        // Auto-play video ujian semasa web dibuka
-        tukarSiaran('https://dktv-premium.zqstore80.workers.dev/https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8');
+        // Auto-play video Astro Awani semasa web dibuka supaya anda nampak siaran langsung berfungsi
+        tukarSiaran('https://astroawani-ott.sec.xandr.com/out/v1/b520db7b46da43118d32785cb68b1a37/index.m3u8');
     </script>
 </body>
 </html>
