@@ -8,7 +8,11 @@
     <style>
         body { background-color: #121212; color: white; display: flex; flex-direction: column; align-items: center; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
         h1 { color: #00ff00; text-transform: uppercase; letter-spacing: 2px; }
-        video { width: 100%; max-width: 800px; border-radius: 10px; box-shadow: 0px 0px 20px rgba(0,255,0,0.3); background: #000; }
+        
+        /* Gaya untuk skrin video m3u8 dan skrin iframe */
+        #skrin-tv, #skrin-iframe { width: 100%; max-width: 800px; border-radius: 10px; box-shadow: 0px 0px 20px rgba(0,255,0,0.3); background: #000; }
+        #skrin-iframe { height: 450px; border: none; }
+        
         .senarai-saluran { display: flex; gap: 15px; margin-top: 25px; flex-wrap: wrap; justify-content: center; }
         button { padding: 10px 25px; background: #333; color: white; border: 2px solid #555; cursor: pointer; border-radius: 5px; font-size: 16px; font-weight: bold; transition: 0.3s; }
         button:hover { background: #00ff00; color: black; border-color: #00ff00; transform: scale(1.1); }
@@ -17,41 +21,62 @@
 <body>
 
     <h1>DK TV PREMIUM</h1>
+    
+    <!-- Skrin Pertama: Untuk pautan .m3u8 (HLS) -->
     <video id="skrin-tv" controls autoplay muted></video>
+    
+    <!-- Skrin Kedua: Untuk pautan YouTube / Laman Web Rasmi (Iframe) -->
+    <iframe id="skrin-iframe" style="display: none;" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
     <!-- RUANGAN ISI LINK DAN NAMA SIARAN -->
     <div class="senarai-saluran">
         
-        <button onclick="tukarSiaran('https://dktv-premium.zqstore80.workers.dev/https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">UJI PROKSI</button>
+        <!-- TEKNIK 1: HLS M3U8 (Guna proksi jika disekat) -->
+        <button onclick="tukarSiaran('m3u8', 'https://dktv-premium.zqstore80.workers.dev/https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">WILD EARTH</button>
+        
+        <!-- TEKNIK 2: IFRAME YOUTUBE LIVE (Ini cara web besar siarkan TV Malaysia!) -->
+        <button onclick="tukarSiaran('iframe', 'https://www.youtube.com/embed/live_stream?channel=UCkO2MDRP4Nnd1j9Wq4F7TqQ&autoplay=1')">ASTRO AWANI (LIVE)</button>
+        
+        <button onclick="tukarSiaran('iframe', 'https://www.youtube.com/embed/live_stream?channel=UCgDq-Hq0Y16rFmZ7kX2_1-A&autoplay=1')">BERNAMA TV (LIVE)</button>
 
-        <!-- Pautan Awani ini sangat stabil dan biasanya tidak perlukan proksi -->
-        <button onclick="tukarSiaran('https://wildearth-plex.amagi.tv/master.m3u8')">WILD EARTH</button>
-        
-        <!-- Pautan alternatif TV1 (Mungkin berfungsi bergantung kepada lokasi) -->
-        <button onclick="tukarSiaran('https://rtm.glueapi.io/v1/video-api/3154/480')">TV1</button>
-        
-        <!-- Contoh pautan luar negara menggunakan proksi anda (Makkah Live) -->
-        <button onclick="tukarSiaran('https://dktv-premium.zqstore80.workers.dev/https://quranes-edge.itworks.video/playlist.m3u8')">MAKKAH LIVE</button>
+        <!-- Contoh m3u8 lain (Makkah Live) -->
+        <button onclick="tukarSiaran('m3u8', 'https://dktv-premium.zqstore80.workers.dev/https://quranes-edge.itworks.video/playlist.m3u8')">MAKKAH LIVE</button>
         
     </div>
 
     <script>
         var video = document.getElementById('skrin-tv');
+        var iframe = document.getElementById('skrin-iframe');
         var hls = new Hls();
 
-        function tukarSiaran(sumberVideo) {
-            if (Hls.isSupported()) {
-                hls.loadSource(sumberVideo);
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() { video.play(); });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = sumberVideo;
-                video.addEventListener('loadedmetadata', function() { video.play(); });
+        function tukarSiaran(jenis, pautan) {
+            if (jenis === 'm3u8') {
+                // Tutup Iframe, Buka Skrin Video
+                iframe.style.display = 'none';
+                video.style.display = 'block';
+                iframe.src = ""; // Matikan bunyi iframe
+                
+                if (Hls.isSupported()) {
+                    hls.loadSource(pautan);
+                    hls.attachMedia(video);
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() { video.play(); });
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = pautan;
+                    video.addEventListener('loadedmetadata', function() { video.play(); });
+                }
+            } 
+            else if (jenis === 'iframe') {
+                // Tutup Skrin Video, Buka Iframe
+                video.style.display = 'none';
+                iframe.style.display = 'block';
+                video.pause(); // Matikan bunyi video
+                
+                iframe.src = pautan;
             }
         }
 
-        // Auto-play video Astro Awani semasa web dibuka supaya anda nampak siaran langsung berfungsi
-        tukarSiaran('https://astroawani-ott.sec.xandr.com/out/v1/b520db7b46da43118d32785cb68b1a37/index.m3u8');
+        // Mula-mula buka web, mainkan pautan pertama
+        tukarSiaran('m3u8', 'https://dktv-premium.zqstore80.workers.dev/https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8');
     </script>
 </body>
 </html>
