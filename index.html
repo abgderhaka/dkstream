@@ -65,7 +65,15 @@
   .kosong span { color:var(--malap); font-size:13px; }
   #status { min-height:22px; margin:10px 4px 0; font-size:14px; color:var(--malap); }
   #status.error { color:#ff6b6b; }
-  #bunyi { display:none; margin-top:6px; }
+  .alat { position:absolute; top:12px; right:12px; z-index:4; display:none; gap:8px; align-items:center; opacity:0; transition:opacity .2s; }
+  .pemain.main .alat { display:flex; }
+  .pemain:hover .alat, .alat:focus-within { opacity:1; }
+  @media (hover:none) { .pemain.main .alat { opacity:1; } }
+  .abtn, .alat select { height:34px; padding:0 12px; border-radius:8px; border:1px solid rgba(255,255,255,.28); background:rgba(0,0,0,.65);
+                        color:#fff; font:inherit; font-size:13px; font-weight:600; backdrop-filter:blur(6px); }
+  .abtn:hover, .alat select:hover { border-color:var(--hijau); }
+  .alat select option { background:#0e1c15; color:#fff; }
+  #bunyi { display:none; }
 
   /* ---------- Panel Kini Menonton ---------- */
   .kini { background:linear-gradient(160deg,var(--panel2),var(--panel)); border:1px solid var(--garis); border-radius:18px; padding:18px;
@@ -110,9 +118,8 @@
     .atas { flex-wrap:wrap; gap:10px; padding:10px 14px; }
     .jenama small { display:none; }
     .cari { order:3; flex-basis:100%; max-width:none; }
-    .btn .teks { display:none; }
-    .btn { margin-left:auto; }
-    .btn + .btn { margin-left:0; }
+    .atas .btn .teks { display:none; }
+    .atas .btn { margin-left:auto; }
     .rangka { grid-template-columns:1fr; padding:14px 14px 30px; gap:14px; }
     .sisi { position:static; flex-direction:row; overflow-x:auto; gap:8px; padding-bottom:4px; }
     .tajuk-kecil, .sisi hr { display:none; }
@@ -134,7 +141,6 @@
   </div>
   <label class="cari"><span aria-hidden="true">&#9906;</span><input id="cari" type="search" placeholder="Cari saluran TV..." aria-label="Cari saluran"></label>
   <button class="btn" id="btnFav" type="button" aria-pressed="false"><span aria-hidden="true">&#9733;</span><span class="teks">Kegemaran</span></button>
-  <button class="btn bulat" id="btnPenuh" type="button" aria-label="Skrin penuh">&#9974;</button>
 </header>
 
 <div class="rangka">
@@ -148,10 +154,14 @@
           <iframe id="skrin-iframe" allow="autoplay; encrypted-media"></iframe>
           <div class="sekat"></div>
           <div class="lencana-live"><i></i>LIVE</div>
+          <div class="alat">
+            <select id="kualiti" aria-label="Kualiti video" style="display:none"></select>
+            <button class="abtn" id="bunyi" type="button"></button>
+            <button class="abtn" id="btnPenuh" type="button" aria-label="Skrin penuh">&#9974; Skrin penuh</button>
+          </div>
           <div class="kosong"><strong>Selamat datang ke DK TV</strong><span>Pilih saluran di bawah untuk mula menonton.</span></div>
         </div>
         <div id="status"></div>
-        <button class="btn" id="bunyi" type="button">Buka bunyi</button>
       </div>
 
       <aside class="kini">
@@ -194,12 +204,24 @@ var KATEGORI = ['Nasional','Berita','Hiburan','Sukan','Kanak-Kanak','Antarabangs
 
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
-var statusEl = $('status'), bunyiBtn = $('bunyi');
+var statusEl = $('status'), bunyiBtn = $('bunyi'), kualitiEl = $('kualiti');
 var hls = null, cuba = 0, bisu = true;
 var semasa = -1, tapis = 'semua', carian = '', fav = [];
 
 try { fav = JSON.parse(localStorage.getItem('dk_fav') || '[]'); } catch (e) { fav = []; }
 function simpanFav() { try { localStorage.setItem('dk_fav', JSON.stringify(fav)); } catch (e) {} }
+function bunyiLabel() { bunyiBtn.textContent = bisu ? '\uD83D\uDD07 Buka bunyi' : '\uD83D\uDD0A Tutup bunyi'; }
+
+function binaKualiti() {
+  var lv = hls ? hls.levels : null;
+  if (!lv || lv.length < 2) { kualitiEl.style.display = 'none'; return; }
+  var urut = lv.map(function (l, i) { return { i:i, h:l.height || 0, b:l.bitrate || 0 }; })
+               .sort(function (a, b) { return b.h - a.h || b.b - a.b; });
+  var h = '<option value="-1">Auto</option>';
+  urut.forEach(function (o) { h += '<option value="' + o.i + '">' + (o.h ? o.h + 'p' : Math.round(o.b / 1000) + ' kbps') + '</option>'; });
+  kualitiEl.innerHTML = h; kualitiEl.value = '-1'; kualitiEl.style.display = '';
+}
+
 function papar(m, r) { statusEl.textContent = m; statusEl.className = r ? 'error' : ''; }
 
 /* ---------- Logo dengan fallback huruf awal ---------- */
@@ -294,7 +316,8 @@ function main(i) {
   pemainEl.classList.add('main');
   pemainEl.classList.toggle('yt', s.jenis === 'iframe');
   bunyiBtn.style.display = s.jenis === 'iframe' ? 'inline-flex' : 'none';
-  bisu = true; bunyiBtn.textContent = 'Buka bunyi';
+  bisu = true; bunyiLabel();
+  kualitiEl.style.display = 'none'; kualitiEl.innerHTML = '';
 
   if (s.jenis === 'iframe') {
     video.style.display = 'none'; iframe.style.display = 'block'; iframe.src = s.url; papar('');
@@ -305,7 +328,7 @@ function main(i) {
 
   if (window.Hls && Hls.isSupported()) {
     hls = new Hls({ enableWorker:true, maxBufferLength:30 });
-    hls.on(Hls.Events.MANIFEST_PARSED, function () { papar(''); video.play().catch(function () {}); });
+    hls.on(Hls.Events.MANIFEST_PARSED, function () { papar(''); binaKualiti(); video.play().catch(function () {}); });
     hls.on(Hls.Events.ERROR, function (e, d) {
       console.log('HLS error:', d.type, d.details, d.response ? d.response.code : '');
       if (!d.fatal) return;
@@ -332,8 +355,9 @@ function main(i) {
 bunyiBtn.addEventListener('click', function () {
   bisu = !bisu;
   iframe.contentWindow.postMessage(JSON.stringify({ event:'command', func: bisu ? 'mute' : 'unMute', args:[] }), '*');
-  bunyiBtn.textContent = bisu ? 'Buka bunyi' : 'Tutup bunyi';
+  bunyiLabel();
 });
+kualitiEl.addEventListener('change', function () { if (hls) hls.currentLevel = parseInt(kualitiEl.value, 10); });
 $('cari').addEventListener('input', function (e) { carian = e.target.value.trim(); senarai(); });
 $('btnFav').addEventListener('click', function () { tapis = tapis === 'fav' ? 'semua' : 'fav'; $('btnFav').classList.toggle('on', tapis === 'fav'); senarai(); });
 $('kiniFav').addEventListener('click', function () { if (semasa >= 0) togolFav(saluran[semasa].nama); });
