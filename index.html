@@ -21,6 +21,10 @@
   #skrin-tv, #skrin-iframe { position:absolute; inset:0; width:100%; height:100%; border:0; background:#000; }
   #skrin-iframe { display:none; }
 
+  .sekat { position:absolute; inset:0; z-index:2; display:none; }
+  .pemain.yt .sekat { display:block; }
+  #bunyi { display:none; margin-top:10px; padding:8px 16px; background:var(--kad); color:var(--teks); border:2px solid var(--garis); border-radius:8px; font:inherit; font-size:14px; cursor:pointer; }
+  #bunyi:hover { border-color:var(--hijau); }
   #status { min-height:22px; margin:10px 2px 0; font-size:14px; color:var(--malap); }
   #status.error { color:#ff6b6b; }
 
@@ -51,9 +55,11 @@
 
   <div class="pemain">
     <video id="skrin-tv" controls autoplay muted playsinline></video>
-    <iframe id="skrin-iframe" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <iframe id="skrin-iframe" allow="autoplay; encrypted-media"></iframe>
+    <div class="sekat"></div>
   </div>
   <div id="status"></div>
+  <button id="bunyi" type="button">Buka bunyi</button>
 
   <h2>Saluran</h2>
   <div class="grid" id="grid"></div>
@@ -72,7 +78,7 @@ var CF = 'https://d25tgymtnqzu8s.cloudfront.net/';
 var saluran = [
   { nama:'TV1', jenis:'m3u8', logo:'logo/tv1.png', url: PROKSI + CF + 'live/media0/tv1/HLS/tv1.m3u8?id=1' },
   { nama:'TV2', jenis:'m3u8', logo:'https://i.imgur.com/1v2qGOd.png', url: PROKSI + CF + 'smil:tv2/chunklist_b2596000_slENG.m3u8?id=2' },
-  { nama:'Awani', jenis:'iframe', logo:'logo/awani.png', url:'https://www.youtube.com/embed/mkVyNaGee8A?autoplay=1&mute=1' },
+  { nama:'Awani', jenis:'iframe', logo:'logo/awani.png', url:'https://www.youtube.com/embed/mkVyNaGee8A?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' },
   { nama:'Makkah Live', jenis:'m3u8', logo:'logo/makkah.png', url: PROKSI + 'https://quranes-edge.itworks.video/playlist.m3u8' },
   { nama:'Wild Earth', jenis:'m3u8', logo:'logo/wildearth.png', url: PROKSI + 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
 ];
@@ -85,6 +91,9 @@ var sedangEl = document.getElementById('sedang');
 var gridEl = document.getElementById('grid');
 var hls = null;
 var cuba = 0;
+var pemainEl = document.querySelector('.pemain');
+var bunyiBtn = document.getElementById('bunyi');
+var bisu = true;
 
 function papar(mesej, ralat) { statusEl.textContent = mesej; statusEl.className = ralat ? 'error' : ''; }
 
@@ -136,6 +145,11 @@ function main(i) {
   hentiHls();
   cuba = 0;
 
+  pemainEl.classList.toggle('yt', s.jenis === 'iframe');
+  bunyiBtn.style.display = s.jenis === 'iframe' ? 'inline-block' : 'none';
+  bisu = true;
+  bunyiBtn.textContent = 'Buka bunyi';
+
   if (s.jenis === 'iframe') {
     video.style.display = 'none';
     iframe.style.display = 'block';
@@ -177,6 +191,12 @@ function main(i) {
     papar('Pelayar anda tidak menyokong HLS.', true);
   }
 }
+
+bunyiBtn.addEventListener('click', function () {
+  bisu = !bisu;
+  iframe.contentWindow.postMessage(JSON.stringify({ event:'command', func: bisu ? 'mute' : 'unMute', args:[] }), '*');
+  bunyiBtn.textContent = bisu ? 'Buka bunyi' : 'Tutup bunyi';
+});
 
 bina();
 main(0);
