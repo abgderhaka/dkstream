@@ -54,6 +54,9 @@
   #skrin-iframe { display:none; }
   .sekat { position:absolute; inset:0; z-index:2; display:none; }
   .pemain.yt .sekat { display:block; }
+  .penutup { position:absolute; inset:0; z-index:2; display:flex; align-items:center; justify-content:center; pointer-events:none;
+             background:radial-gradient(circle at 50% 40%, #1b4932, #08120e 70%); color:var(--malap); font-size:14px; opacity:0; transition:opacity .6s; }
+  .pemain.memuat .penutup { opacity:1; }
   .lencana-live { position:absolute; top:14px; left:14px; z-index:3; background:#e11d2e; color:#fff; font-weight:800; font-size:13px;
                   padding:5px 12px; border-radius:7px; display:none; align-items:center; gap:7px; pointer-events:none; }
   .lencana-live i { width:8px; height:8px; border-radius:50%; background:#fff; }
@@ -154,6 +157,7 @@
           <video id="skrin-tv" autoplay muted playsinline disablepictureinpicture></video>
           <iframe id="skrin-iframe" allow="autoplay; encrypted-media"></iframe>
           <div class="sekat"></div>
+          <div class="penutup">Memuatkan siaran...</div>
           <div class="lencana-live"><i></i>LIVE</div>
           <div class="alat">
             <select id="kualiti" aria-label="Kualiti video" style="display:none"></select>
@@ -206,7 +210,7 @@ var KATEGORI = ['Nasional','Berita','Hiburan','Sukan','Kanak-Kanak','Antarabangs
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
 var statusEl = $('status'), bunyiBtn = $('bunyi'), kualitiEl = $('kualiti');
-var hls = null, cuba = 0, bisu = true;
+var hls = null, cuba = 0, bisu = true, tmrMuat = null;
 var semasa = -1, tapis = 'semua', carian = '', fav = [];
 
 try { fav = JSON.parse(localStorage.getItem('dk_fav') || '[]'); } catch (e) { fav = []; }
@@ -320,6 +324,7 @@ function main(i) {
   var s = saluran[i];
   senarai(); kemasKini();
   hentiHls(); cuba = 0;
+  clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
 
   pemainEl.classList.add('main');
   pemainEl.classList.toggle('yt', s.jenis === 'iframe');
@@ -328,10 +333,14 @@ function main(i) {
   kualitiEl.style.display = 'none'; kualitiEl.innerHTML = '';
 
   if (s.jenis === 'iframe') {
-    video.style.display = 'none'; iframe.style.display = 'block'; iframe.src = s.url; papar('');
+    video.style.display = 'none'; iframe.style.display = 'block'; papar('');
+    /* Tutup paparan awal YouTube (tajuk, "More videos") semasa video dimuatkan */
+    pemainEl.classList.add('memuat');
+    iframe.onload = function () { tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 4500); };
+    iframe.src = s.url;
     return;
   }
-  iframe.style.display = 'none'; iframe.src = ''; video.style.display = 'block';
+  iframe.onload = null; iframe.style.display = 'none'; iframe.src = ''; video.style.display = 'block';
   papar('Memuatkan siaran...');
 
   if (window.Hls && Hls.isSupported()) {
