@@ -3,164 +3,304 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#06120c">
 <title>DK TV Premium</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
 <style>
-  :root { --hijau:#00e676; --latar:#101312; --kad:#1b201e; --garis:#2c3430; --teks:#f2f5f3; --malap:#93a09a; }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--latar); color:var(--teks); font-family:"Segoe UI",Arial,sans-serif; }
-  .bungkus { max-width:960px; margin:0 auto; padding:20px 16px 40px; }
+  :root { --hijau:#21e681; --hijau2:#0bbd68; --latar:#06120c; --panel:#0e1c15; --panel2:#13261c; --garis:rgba(255,255,255,.09); --teks:#f3f8f5; --malap:#93a89c; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; }
+  body { background:radial-gradient(ellipse at 60% -10%, #15432e 0, transparent 45%), var(--latar); color:var(--teks);
+         font-family:"Segoe UI",Roboto,Arial,sans-serif; min-height:100vh; }
+  button { font:inherit; color:inherit; cursor:pointer; }
+  :focus-visible { outline:3px solid var(--hijau); outline-offset:2px; }
 
-  header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-  header h1 { margin:0; font-size:22px; letter-spacing:1px; color:var(--hijau); }
-  #sedang { font-size:14px; color:var(--malap); }
-  #sedang b { color:var(--teks); }
+  /* ---------- Bar atas ---------- */
+  .atas { display:flex; align-items:center; gap:18px; padding:12px 22px; border-bottom:1px solid var(--garis);
+          background:rgba(6,18,12,.85); backdrop-filter:blur(12px); position:sticky; top:0; z-index:20; }
+  .jenama { display:flex; align-items:center; gap:10px; white-space:nowrap; }
+  .jenama-ikon { width:38px; height:38px; border:2px solid var(--hijau); border-radius:11px; display:grid; place-items:center;
+                 color:var(--hijau); box-shadow:0 0 18px rgba(33,230,129,.35); font-size:15px; }
+  .jenama-nama { font-size:22px; font-weight:800; font-style:italic; letter-spacing:-.5px; }
+  .jenama-nama b { background:var(--hijau); color:#04210f; padding:1px 9px; border-radius:7px; font-size:15px; margin-left:6px; font-style:italic; }
+  .jenama small { display:block; font-size:11px; color:var(--malap); font-style:normal; font-weight:400; letter-spacing:0; margin-top:2px; }
+  .cari { flex:1; max-width:520px; margin:0 auto; display:flex; align-items:center; gap:10px; padding:0 16px; height:42px;
+          border:1.5px solid rgba(255,255,255,.28); border-radius:99px; background:rgba(0,0,0,.35); }
+  .cari input { flex:1; background:none; border:0; outline:0; color:var(--teks); font:inherit; font-size:14px; min-width:0; }
+  .cari:focus-within { border-color:var(--hijau); }
+  .btn { height:42px; padding:0 16px; border-radius:99px; border:1.5px solid var(--garis); background:var(--panel); display:inline-flex; align-items:center; gap:8px; font-size:14px; font-weight:600; }
+  .btn:hover { border-color:var(--hijau); }
+  .btn.on { border-color:var(--hijau); color:var(--hijau); background:#0f3322; }
+  .btn.bulat { width:42px; padding:0; justify-content:center; }
 
-  .pemain { position:relative; aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden;
-            box-shadow:0 0 24px rgba(0,230,118,.25); }
+  /* ---------- Rangka ---------- */
+  .rangka { display:grid; grid-template-columns:230px minmax(0,1fr); gap:20px; padding:20px 22px 40px; max-width:1500px; margin:0 auto; }
+
+  .sisi { display:flex; flex-direction:column; gap:4px; align-self:start; position:sticky; top:80px; }
+  .nav { display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:11px 14px; border:1.5px solid transparent; border-radius:12px;
+         background:none; font-size:14px; font-weight:500; color:var(--teks); }
+  .nav:hover { background:rgba(255,255,255,.05); }
+  .nav.aktif { background:linear-gradient(90deg,#14a35a,#0c6b3a); border-color:var(--hijau); font-weight:700; box-shadow:0 0 18px rgba(33,230,129,.25); }
+  .nav .ik { width:22px; text-align:center; font-size:17px; }
+  .tajuk-kecil { margin:14px 14px 4px; font-size:11px; letter-spacing:1.5px; color:var(--malap); font-weight:700; }
+  .nav.kecil { padding:8px 14px; font-size:13.5px; }
+  .nav.kecil.aktif { background:#123c28; border-color:transparent; color:var(--hijau); box-shadow:none; }
+
+  /* ---------- Pemain ---------- */
+  .atas-main { display:grid; grid-template-columns:minmax(0,1fr) 270px; gap:18px; }
+  .pemain { position:relative; aspect-ratio:16/9; background:#000; border-radius:18px; overflow:hidden; border:2px solid #1f5a3b;
+            box-shadow:0 0 30px rgba(33,230,129,.22); }
   #skrin-tv, #skrin-iframe { position:absolute; inset:0; width:100%; height:100%; border:0; background:#000; }
   #skrin-iframe { display:none; }
-
   .sekat { position:absolute; inset:0; z-index:2; display:none; }
   .pemain.yt .sekat { display:block; }
-  #bunyi { display:none; margin-top:10px; padding:8px 16px; background:var(--kad); color:var(--teks); border:2px solid var(--garis); border-radius:8px; font:inherit; font-size:14px; cursor:pointer; }
-  #bunyi:hover { border-color:var(--hijau); }
-  #status { min-height:22px; margin:10px 2px 0; font-size:14px; color:var(--malap); }
+  .lencana-live { position:absolute; top:14px; left:14px; z-index:3; background:#e11d2e; color:#fff; font-weight:800; font-size:13px;
+                  padding:5px 12px; border-radius:7px; display:none; align-items:center; gap:7px; pointer-events:none; }
+  .lencana-live i { width:8px; height:8px; border-radius:50%; background:#fff; }
+  .pemain.main .lencana-live { display:flex; }
+  .kosong { position:absolute; inset:0; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+            background:radial-gradient(circle at 50% 40%, #1b4932, #08120e 70%); text-align:center; padding:20px; }
+  .pemain.main .kosong { display:none; }
+  .kosong strong { font-size:20px; }
+  .kosong span { color:var(--malap); font-size:13px; }
+  #status { min-height:22px; margin:10px 4px 0; font-size:14px; color:var(--malap); }
   #status.error { color:#ff6b6b; }
+  #bunyi { display:none; margin-top:6px; }
 
-  h2 { font-size:15px; font-weight:600; margin:22px 2px 10px; color:var(--malap); }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:12px; }
-  .kad { background:var(--kad); border:2px solid var(--garis); border-radius:12px; padding:14px 8px 10px;
-         display:flex; flex-direction:column; align-items:center; gap:10px; cursor:pointer;
-         color:var(--teks); font:inherit; transition:border-color .2s, background .2s; }
-  .kad:hover { border-color:var(--hijau); }
-  .kad:focus-visible { outline:3px solid var(--hijau); outline-offset:2px; }
-  .kad.aktif { border-color:var(--hijau); background:#14301f; }
-  .logo { width:84px; height:56px; display:flex; align-items:center; justify-content:center; }
-  .logo img { max-width:100%; max-height:100%; object-fit:contain; }
-  .lencana { width:56px; height:56px; border-radius:50%; background:var(--garis); color:var(--hijau);
-             display:flex; align-items:center; justify-content:center; font-weight:700; font-size:18px; }
-  .nama { font-size:13px; font-weight:600; text-align:center; }
+  /* ---------- Panel Kini Menonton ---------- */
+  .kini { background:linear-gradient(160deg,var(--panel2),var(--panel)); border:1px solid var(--garis); border-radius:18px; padding:18px;
+          display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; }
+  .kini h3 { align-self:flex-start; margin:0 0 6px; color:var(--hijau); font-size:17px; }
+  .kini-logo { width:100%; height:120px; display:flex; align-items:center; justify-content:center; }
+  .kini-logo img { max-width:100%; max-height:100%; object-fit:contain; }
+  .kini-logo .lencana { width:96px; height:96px; font-size:36px; }
+  .kini-nama { font-size:20px; font-weight:700; }
+  .kini-kat { color:var(--malap); font-size:14px; }
+  .pil { display:inline-flex; align-items:center; gap:7px; padding:6px 16px; border-radius:99px; border:1.5px solid #1e8c55; background:#0f3322; color:var(--hijau); font-weight:700; font-size:13px; }
+  .pil i { width:7px; height:7px; border-radius:50%; background:var(--hijau); box-shadow:0 0 8px var(--hijau); }
 
-  @media (max-width:480px) { .grid { grid-template-columns:repeat(3,1fr); gap:8px; } .logo { width:64px; height:44px; } }
+  /* ---------- Senarai saluran ---------- */
+  .tajuk-sen { display:flex; align-items:baseline; justify-content:space-between; margin:26px 2px 12px; }
+  .tajuk-sen h2 { margin:0; font-size:20px; }
+  .tajuk-sen span { color:var(--malap); font-size:13px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; }
+  .kad { position:relative; display:flex; flex-direction:column; border:1.5px solid var(--garis); border-radius:14px; overflow:hidden; background:var(--panel);
+         cursor:pointer; transition:transform .15s, border-color .15s; }
+  .kad:hover { transform:translateY(-3px); border-color:var(--hijau); }
+  .kad.aktif { border-color:var(--hijau); box-shadow:0 0 20px rgba(33,230,129,.3); }
+  .kad-logo { height:92px; display:flex; align-items:center; justify-content:center; padding:10px; background:linear-gradient(160deg,#173326,#0b1812); }
+  .kad-logo img { max-width:100%; max-height:100%; object-fit:contain; }
+  .kad-nama { padding:10px 8px; text-align:center; font-weight:600; font-size:14px; background:rgba(0,0,0,.25); }
+  .fav { position:absolute; top:6px; right:6px; width:30px; height:30px; border-radius:50%; border:0; background:rgba(0,0,0,.45); font-size:16px; line-height:1; color:#9bb0a4; }
+  .fav.on { color:#ffd54a; }
+  .lencana { width:56px; height:56px; border-radius:50%; background:var(--garis); color:var(--hijau); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:22px; }
+  .tiada { grid-column:1/-1; padding:30px; text-align:center; color:var(--malap); border:1px dashed var(--garis); border-radius:14px; }
+
+  footer { margin-top:34px; padding-top:18px; border-top:1px solid var(--garis); color:var(--malap); font-size:12px; }
+
+  /* ---------- Telefon / tablet ---------- */
+  @media (max-width:1000px) {
+    .atas-main { grid-template-columns:1fr; }
+    .kini { flex-direction:row; text-align:left; flex-wrap:wrap; justify-content:flex-start; }
+    .kini h3 { width:100%; }
+    .kini-logo { width:90px; height:70px; }
+    .kini-logo .lencana { width:60px; height:60px; font-size:24px; }
+  }
+  @media (max-width:760px) {
+    .atas { flex-wrap:wrap; gap:10px; padding:10px 14px; }
+    .jenama small { display:none; }
+    .cari { order:3; flex-basis:100%; max-width:none; }
+    .btn .teks { display:none; }
+    .btn { margin-left:auto; }
+    .btn + .btn { margin-left:0; }
+    .rangka { grid-template-columns:1fr; padding:14px 14px 30px; gap:14px; }
+    .sisi { position:static; flex-direction:row; overflow-x:auto; gap:8px; padding-bottom:4px; }
+    .tajuk-kecil, .sisi hr { display:none; }
+    .nav, .nav.kecil { width:auto; white-space:nowrap; padding:8px 14px; border:1.5px solid var(--garis); border-radius:99px; background:var(--panel); font-size:13px; }
+    .nav .ik { display:none; }
+    .nav.aktif, .nav.kecil.aktif { background:#123c28; border-color:var(--hijau); color:var(--hijau); }
+    .grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+    .pemain { border-radius:12px; }
+  }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; } }
 </style>
 </head>
 <body>
-<div class="bungkus">
 
-  <header>
-    <h1>DK TV PREMIUM</h1>
-    <div id="sedang">Pilih saluran</div>
-  </header>
-
-  <div class="pemain">
-    <video id="skrin-tv" controls autoplay muted playsinline></video>
-    <iframe id="skrin-iframe" allow="autoplay; encrypted-media"></iframe>
-    <div class="sekat"></div>
+<header class="atas">
+  <div class="jenama">
+    <div class="jenama-ikon">&#9654;</div>
+    <div class="jenama-nama">DK TV<b>PREMIUM</b><small>Nonton TV Malaysia, Percuma &amp; Berkualiti</small></div>
   </div>
-  <div id="status"></div>
-  <button id="bunyi" type="button">Buka bunyi</button>
+  <label class="cari"><span aria-hidden="true">&#9906;</span><input id="cari" type="search" placeholder="Cari saluran TV..." aria-label="Cari saluran"></label>
+  <button class="btn" id="btnFav" type="button" aria-pressed="false"><span aria-hidden="true">&#9733;</span><span class="teks">Kegemaran</span></button>
+  <button class="btn bulat" id="btnPenuh" type="button" aria-label="Skrin penuh">&#9974;</button>
+</header>
 
-  <h2>Saluran</h2>
-  <div class="grid" id="grid"></div>
+<div class="rangka">
+  <aside class="sisi" id="sisi"></aside>
 
+  <main>
+    <div class="atas-main">
+      <div>
+        <div class="pemain" id="pemain">
+          <video id="skrin-tv" controls autoplay muted playsinline></video>
+          <iframe id="skrin-iframe" allow="autoplay; encrypted-media"></iframe>
+          <div class="sekat"></div>
+          <div class="lencana-live"><i></i>LIVE</div>
+          <div class="kosong"><strong>Selamat datang ke DK TV</strong><span>Pilih saluran di bawah untuk mula menonton.</span></div>
+        </div>
+        <div id="status"></div>
+        <button class="btn" id="bunyi" type="button">Buka bunyi</button>
+      </div>
+
+      <aside class="kini">
+        <h3>Kini Menonton</h3>
+        <div class="kini-logo" id="kiniLogo"></div>
+        <div>
+          <div class="kini-nama" id="kiniNama">Pilih saluran</div>
+          <div class="kini-kat" id="kiniKat">&nbsp;</div>
+        </div>
+        <span class="pil"><i></i>LIVE</span>
+        <button class="btn" id="kiniFav" type="button" style="display:none">&#9734; Tambah kegemaran</button>
+      </aside>
+    </div>
+
+    <div class="tajuk-sen"><h2 id="tajukSen">Semua Saluran</h2><span id="bilangan"></span></div>
+    <div class="grid" id="grid"></div>
+
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV.</footer>
+  </main>
 </div>
 
 <script>
 /* ================= SENARAI SALURAN =================
    Tambah saluran baru dengan menambah satu baris di sini.
    jenis : 'm3u8' atau 'iframe'
-   logo  : laluan fail dalam repo GitHub anda, atau pautan gambar penuh.
-           Kosongkan (atau fail tiada) = papar huruf awal nama.                    */
+   kat   : Nasional / Berita / Hiburan / Sukan / Kanak-Kanak / Antarabangsa
+   logo  : laluan fail dalam repo GitHub, atau pautan gambar penuh. Kosong = huruf awal.   */
 var PROKSI = 'https://dktv-premium.zqstore80.workers.dev/';
 var CF = 'https://d25tgymtnqzu8s.cloudfront.net/';
 
 var saluran = [
-  { nama:'TV1', jenis:'m3u8', logo:'logo/tv1.png', url: PROKSI + CF + 'live/media0/tv1/HLS/tv1.m3u8?id=1' },
-  { nama:'TV2', jenis:'m3u8', logo:'https://i.imgur.com/1v2qGOd.png', url: PROKSI + CF + 'smil:tv2/chunklist_b2596000_slENG.m3u8?id=2' },
-  { nama:'Awani', jenis:'iframe', logo:'logo/awani.png', url:'https://www.youtube.com/embed/mkVyNaGee8A?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' },
-  { nama:'Makkah Live', jenis:'m3u8', logo:'logo/makkah.png', url: PROKSI + 'https://quranes-edge.itworks.video/playlist.m3u8' },
-  { nama:'Wild Earth', jenis:'m3u8', logo:'logo/wildearth.png', url: PROKSI + 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
+  { nama:'TV1', kat:'Nasional', jenis:'m3u8', logo:'logo/tv1.png', url: PROKSI + CF + 'live/media0/tv1/HLS/tv1.m3u8?id=1' },
+  { nama:'TV2', kat:'Nasional', jenis:'m3u8', logo:'https://i.imgur.com/1v2qGOd.png', url: PROKSI + CF + 'smil:tv2/chunklist_b2596000_slENG.m3u8?id=2' },
+  { nama:'Awani', kat:'Berita', jenis:'iframe', logo:'logo/awani.png', url:'https://www.youtube.com/embed/mkVyNaGee8A?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' },
+  { nama:'Makkah Live', kat:'Antarabangsa', jenis:'m3u8', logo:'logo/makkah.png', url: PROKSI + 'https://quranes-edge.itworks.video/playlist.m3u8' },
+  { nama:'Wild Earth', kat:'Antarabangsa', jenis:'m3u8', logo:'logo/wildearth.png', url: PROKSI + 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
 ];
+var KATEGORI = ['Nasional','Berita','Hiburan','Sukan','Kanak-Kanak','Antarabangsa'];
 /* =================================================== */
 
-var video = document.getElementById('skrin-tv');
-var iframe = document.getElementById('skrin-iframe');
-var statusEl = document.getElementById('status');
-var sedangEl = document.getElementById('sedang');
-var gridEl = document.getElementById('grid');
-var hls = null;
-var cuba = 0;
-var pemainEl = document.querySelector('.pemain');
-var bunyiBtn = document.getElementById('bunyi');
-var bisu = true;
+var $ = function (id) { return document.getElementById(id); };
+var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
+var statusEl = $('status'), bunyiBtn = $('bunyi');
+var hls = null, cuba = 0, bisu = true;
+var semasa = -1, tapis = 'semua', carian = '', fav = [];
 
-function papar(mesej, ralat) { statusEl.textContent = mesej; statusEl.className = ralat ? 'error' : ''; }
+try { fav = JSON.parse(localStorage.getItem('dk_fav') || '[]'); } catch (e) { fav = []; }
+function simpanFav() { try { localStorage.setItem('dk_fav', JSON.stringify(fav)); } catch (e) {} }
+function papar(m, r) { statusEl.textContent = m; statusEl.className = r ? 'error' : ''; }
 
-function bina() {
-  saluran.forEach(function (s, i) {
-    var kad = document.createElement('button');
-    kad.className = 'kad';
-    kad.type = 'button';
-    kad.dataset.i = i;
+/* ---------- Logo dengan fallback huruf awal ---------- */
+function buatLogo(s) {
+  var kotak = document.createDocumentFragment();
+  function lencana() { var l = document.createElement('div'); l.className = 'lencana'; l.textContent = s.nama.charAt(0).toUpperCase(); return l; }
+  if (!s.logo) { kotak.appendChild(lencana()); return kotak; }
+  var img = new Image(); img.alt = s.nama;
+  img.onerror = function () { if (img.parentNode) img.parentNode.replaceChild(lencana(), img); };
+  img.src = s.logo; kotak.appendChild(img);
+  return kotak;
+}
 
-    var kotak = document.createElement('div');
-    kotak.className = 'logo';
-    function lencana() {
-      kotak.innerHTML = '';
-      var l = document.createElement('div');
-      l.className = 'lencana';
-      l.textContent = s.nama.charAt(0).toUpperCase();
-      kotak.appendChild(l);
-    }
-    if (s.logo) {
-      var img = new Image();
-      img.alt = s.nama;
-      img.onerror = lencana;
-      img.src = s.logo;
-      kotak.appendChild(img);
-    } else { lencana(); }
-
-    var nama = document.createElement('div');
-    nama.className = 'nama';
-    nama.textContent = s.nama;
-
-    kad.appendChild(kotak);
-    kad.appendChild(nama);
-    kad.addEventListener('click', function () { main(i); });
-    gridEl.appendChild(kad);
+/* ---------- Sisi (navigasi) ---------- */
+function binaSisi() {
+  var h = '';
+  h += '<button class="nav" data-t="semua"><span class="ik">&#8962;</span>Utama</button>';
+  h += '<button class="nav" data-t="fav"><span class="ik">&#9733;</span>Kegemaran</button>';
+  h += '<div class="tajuk-kecil">KATEGORI</div>';
+  KATEGORI.forEach(function (k) { h += '<button class="nav kecil" data-t="' + k + '">' + k + '</button>'; });
+  $('sisi').innerHTML = h;
+  $('sisi').addEventListener('click', function (e) {
+    var b = e.target.closest('.nav'); if (!b) return;
+    tapis = b.dataset.t; $('btnFav').classList.toggle('on', tapis === 'fav'); senarai();
   });
 }
 
-function hentiHls() {
-  if (hls) { hls.destroy(); hls = null; }
-  video.removeAttribute('src');
-  video.load();
+/* ---------- Senarai kad ---------- */
+function senarai() {
+  document.querySelectorAll('.nav').forEach(function (b) { b.classList.toggle('aktif', b.dataset.t === tapis); });
+  var q = carian.toLowerCase();
+  var hasil = [];
+  saluran.forEach(function (s, i) {
+    if (tapis === 'fav' && fav.indexOf(s.nama) < 0) return;
+    if (tapis !== 'semua' && tapis !== 'fav' && s.kat !== tapis) return;
+    if (q && (s.nama + ' ' + s.kat).toLowerCase().indexOf(q) < 0) return;
+    hasil.push(i);
+  });
+  $('tajukSen').textContent = tapis === 'semua' ? 'Semua Saluran' : tapis === 'fav' ? 'Kegemaran' : tapis;
+  $('bilangan').textContent = hasil.length + ' saluran';
+
+  var g = $('grid'); g.innerHTML = '';
+  if (!hasil.length) { g.innerHTML = '<div class="tiada">Tiada saluran ditemui.</div>'; return; }
+
+  hasil.forEach(function (i) {
+    var s = saluran[i];
+    var kad = document.createElement('div');
+    kad.className = 'kad' + (i === semasa ? ' aktif' : '');
+    kad.tabIndex = 0; kad.setAttribute('role', 'button'); kad.setAttribute('aria-label', 'Tonton ' + s.nama);
+
+    var lg = document.createElement('div'); lg.className = 'kad-logo'; lg.appendChild(buatLogo(s));
+    var nm = document.createElement('div'); nm.className = 'kad-nama'; nm.textContent = s.nama;
+    var f = document.createElement('button'); f.type = 'button';
+    f.className = 'fav' + (fav.indexOf(s.nama) >= 0 ? ' on' : '');
+    f.setAttribute('aria-label', 'Kegemaran ' + s.nama);
+    f.innerHTML = fav.indexOf(s.nama) >= 0 ? '&#9733;' : '&#9734;';
+    f.addEventListener('click', function (e) { e.stopPropagation(); togolFav(s.nama); });
+
+    kad.appendChild(lg); kad.appendChild(nm); kad.appendChild(f);
+    kad.addEventListener('click', function () { main(i); });
+    kad.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); main(i); } });
+    g.appendChild(kad);
+  });
 }
 
-function main(i) {
-  var s = saluran[i];
-  document.querySelectorAll('.kad').forEach(function (k) { k.classList.toggle('aktif', k.dataset.i == i); });
-  sedangEl.innerHTML = 'Sedang ditayang: <b>' + s.nama + '</b>';
-  hentiHls();
-  cuba = 0;
+function togolFav(nama) {
+  var p = fav.indexOf(nama);
+  if (p >= 0) fav.splice(p, 1); else fav.push(nama);
+  simpanFav(); senarai(); kemasKini();
+}
 
+/* ---------- Panel Kini Menonton ---------- */
+function kemasKini() {
+  if (semasa < 0) return;
+  var s = saluran[semasa];
+  var l = $('kiniLogo'); l.innerHTML = ''; l.appendChild(buatLogo(s));
+  $('kiniNama').textContent = s.nama;
+  $('kiniKat').textContent = s.kat;
+  var b = $('kiniFav'); b.style.display = 'inline-flex';
+  b.innerHTML = fav.indexOf(s.nama) >= 0 ? '&#9733; Dalam kegemaran' : '&#9734; Tambah kegemaran';
+}
+
+/* ---------- Pemain ---------- */
+function hentiHls() { if (hls) { hls.destroy(); hls = null; } video.removeAttribute('src'); video.load(); }
+
+function main(i) {
+  semasa = i;
+  var s = saluran[i];
+  senarai(); kemasKini();
+  hentiHls(); cuba = 0;
+
+  pemainEl.classList.add('main');
   pemainEl.classList.toggle('yt', s.jenis === 'iframe');
-  bunyiBtn.style.display = s.jenis === 'iframe' ? 'inline-block' : 'none';
-  bisu = true;
-  bunyiBtn.textContent = 'Buka bunyi';
+  bunyiBtn.style.display = s.jenis === 'iframe' ? 'inline-flex' : 'none';
+  bisu = true; bunyiBtn.textContent = 'Buka bunyi';
 
   if (s.jenis === 'iframe') {
-    video.style.display = 'none';
-    iframe.style.display = 'block';
-    iframe.src = s.url;
-    papar('');
+    video.style.display = 'none'; iframe.style.display = 'block'; iframe.src = s.url; papar('');
     return;
   }
-
-  iframe.style.display = 'none';
-  iframe.src = '';
-  video.style.display = 'block';
+  iframe.style.display = 'none'; iframe.src = ''; video.style.display = 'block';
   papar('Memuatkan siaran...');
 
   if (window.Hls && Hls.isSupported()) {
@@ -178,27 +318,33 @@ function main(i) {
           if (cuba > 3) { papar('Gagal sambung (' + d.details + ', kod ' + kod + '). Semak Worker atau pautan.', true); hentiHls(); }
           else { papar('Masalah rangkaian, mencuba semula (' + cuba + '/3)...', true); hls.startLoad(); }
         }
-      } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) {
-        hls.recoverMediaError();
-      } else { papar('Siaran gagal dimainkan.', true); hentiHls(); }
+      } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) { hls.recoverMediaError(); }
+      else { papar('Siaran gagal dimainkan.', true); hentiHls(); }
     });
-    hls.loadSource(s.url);
-    hls.attachMedia(video);
+    hls.loadSource(s.url); hls.attachMedia(video);
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
     video.src = s.url;
     video.addEventListener('loadedmetadata', function () { papar(''); video.play().catch(function () {}); }, { once:true });
-  } else {
-    papar('Pelayar anda tidak menyokong HLS.', true);
-  }
+  } else { papar('Pelayar anda tidak menyokong HLS.', true); }
 }
 
+/* ---------- Butang & carian ---------- */
 bunyiBtn.addEventListener('click', function () {
   bisu = !bisu;
   iframe.contentWindow.postMessage(JSON.stringify({ event:'command', func: bisu ? 'mute' : 'unMute', args:[] }), '*');
   bunyiBtn.textContent = bisu ? 'Buka bunyi' : 'Tutup bunyi';
 });
+$('cari').addEventListener('input', function (e) { carian = e.target.value.trim(); senarai(); });
+$('btnFav').addEventListener('click', function () { tapis = tapis === 'fav' ? 'semua' : 'fav'; $('btnFav').classList.toggle('on', tapis === 'fav'); senarai(); });
+$('kiniFav').addEventListener('click', function () { if (semasa >= 0) togolFav(saluran[semasa].nama); });
+$('btnPenuh').addEventListener('click', function () {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else if (pemainEl.requestFullscreen) pemainEl.requestFullscreen();
+});
+$('tahun').textContent = new Date().getFullYear();
 
-bina();
+binaSisi();
+senarai();
 main(0);
 </script>
 </body>
