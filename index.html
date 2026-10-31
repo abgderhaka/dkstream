@@ -84,6 +84,7 @@ var statusEl = document.getElementById('status');
 var sedangEl = document.getElementById('sedang');
 var gridEl = document.getElementById('grid');
 var hls = null;
+var cuba = 0;
 
 function papar(mesej, ralat) { statusEl.textContent = mesej; statusEl.className = ralat ? 'error' : ''; }
 
@@ -133,6 +134,7 @@ function main(i) {
   document.querySelectorAll('.kad').forEach(function (k) { k.classList.toggle('aktif', k.dataset.i == i); });
   sedangEl.innerHTML = 'Sedang ditayang: <b>' + s.nama + '</b>';
   hentiHls();
+  cuba = 0;
 
   if (s.jenis === 'iframe') {
     video.style.display = 'none';
@@ -157,7 +159,11 @@ function main(i) {
         var kod = d.response ? d.response.code : 0;
         if (kod === 401 || kod === 403) { papar('Siaran ditolak oleh server (' + kod + ').', true); hentiHls(); }
         else if (kod === 404) { papar('Pautan tidak ditemui (404).', true); hentiHls(); }
-        else { papar('Masalah rangkaian, mencuba semula...', true); hls.startLoad(); }
+        else {
+          cuba++;
+          if (cuba > 3) { papar('Gagal sambung (' + d.details + ', kod ' + kod + '). Semak Worker atau pautan.', true); hentiHls(); }
+          else { papar('Masalah rangkaian, mencuba semula (' + cuba + '/3)...', true); hls.startLoad(); }
+        }
       } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) {
         hls.recoverMediaError();
       } else { papar('Siaran gagal dimainkan.', true); hentiHls(); }
