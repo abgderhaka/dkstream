@@ -69,7 +69,8 @@
   .pemain.main .alat { display:flex; }
   .pemain:hover .alat, .alat:focus-within { opacity:1; }
   @media (hover:none) { .pemain.main .alat { opacity:1; } }
-  .abtn, .alat select { height:34px; padding:0 12px; border-radius:8px; border:1px solid rgba(255,255,255,.28); background:rgba(0,0,0,.65);
+  .abtn { width:36px; padding:0 !important; display:inline-flex; align-items:center; justify-content:center; }
+  .abtn, .alat select { height:36px; padding:0 12px; border-radius:8px; border:1px solid rgba(255,255,255,.28); background:rgba(0,0,0,.65);
                         color:#fff; font:inherit; font-size:13px; font-weight:600; backdrop-filter:blur(6px); }
   .abtn:hover, .alat select:hover { border-color:var(--hijau); }
   .alat select option { background:#0e1c15; color:#fff; }
@@ -157,7 +158,7 @@
           <div class="alat">
             <select id="kualiti" aria-label="Kualiti video" style="display:none"></select>
             <button class="abtn" id="bunyi" type="button"></button>
-            <button class="abtn" id="btnPenuh" type="button" aria-label="Skrin penuh">&#9974; Skrin penuh</button>
+            <button class="abtn" id="btnPenuh" type="button" aria-label="Skrin penuh" title="Skrin penuh"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
           </div>
           <div class="kosong"><strong>Selamat datang ke DK TV</strong><span>Pilih saluran di bawah untuk mula menonton.</span></div>
         </div>
@@ -210,7 +211,14 @@ var semasa = -1, tapis = 'semua', carian = '', fav = [];
 
 try { fav = JSON.parse(localStorage.getItem('dk_fav') || '[]'); } catch (e) { fav = []; }
 function simpanFav() { try { localStorage.setItem('dk_fav', JSON.stringify(fav)); } catch (e) {} }
-function bunyiLabel() { bunyiBtn.textContent = bisu ? '\uD83D\uDD07 Buka bunyi' : '\uD83D\uDD0A Tutup bunyi'; }
+var SVG_A = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+var IKON_MATI = SVG_A + '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6"/><path d="m21 9-5 6"/></svg>';
+var IKON_HIDUP = SVG_A + '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+function bunyiLabel() {
+  bunyiBtn.innerHTML = bisu ? IKON_MATI : IKON_HIDUP;
+  var t = bisu ? 'Buka bunyi' : 'Tutup bunyi';
+  bunyiBtn.title = t; bunyiBtn.setAttribute('aria-label', t);
+}
 
 function binaKualiti() {
   var lv = hls ? hls.levels : null;
