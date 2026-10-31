@@ -65,9 +65,8 @@
   .kosong span { color:var(--malap); font-size:13px; }
   #status { min-height:22px; margin:10px 4px 0; font-size:14px; color:var(--malap); }
   #status.error { color:#ff6b6b; }
-  .alat { position:absolute; bottom:58px; right:12px; z-index:4; display:none; gap:8px; align-items:center; opacity:0; transition:opacity .2s; }
+  .alat { position:absolute; bottom:12px; right:12px; z-index:4; display:none; gap:8px; align-items:center; opacity:0; transition:opacity .2s; }
   .pemain.main .alat { display:flex; }
-  .pemain.yt .alat { bottom:12px; }
   .pemain:hover .alat, .alat:focus-within { opacity:1; }
   @media (hover:none) { .pemain.main .alat { opacity:1; } }
   .abtn { width:36px; padding:0 !important; display:inline-flex; align-items:center; justify-content:center; }
@@ -152,7 +151,7 @@
     <div class="atas-main">
       <div>
         <div class="pemain" id="pemain">
-          <video id="skrin-tv" controls autoplay muted playsinline></video>
+          <video id="skrin-tv" autoplay muted playsinline disablepictureinpicture></video>
           <iframe id="skrin-iframe" allow="autoplay; encrypted-media"></iframe>
           <div class="sekat"></div>
           <div class="lencana-live"><i></i>LIVE</div>
@@ -324,8 +323,8 @@ function main(i) {
 
   pemainEl.classList.add('main');
   pemainEl.classList.toggle('yt', s.jenis === 'iframe');
-  bunyiBtn.style.display = s.jenis === 'iframe' ? 'inline-flex' : 'none';
-  bisu = true; bunyiLabel();
+  bunyiBtn.style.display = 'inline-flex';
+  bisu = true; video.muted = true; bunyiLabel();
   kualitiEl.style.display = 'none'; kualitiEl.innerHTML = '';
 
   if (s.jenis === 'iframe') {
@@ -363,7 +362,11 @@ function main(i) {
 /* ---------- Butang & carian ---------- */
 bunyiBtn.addEventListener('click', function () {
   bisu = !bisu;
-  iframe.contentWindow.postMessage(JSON.stringify({ event:'command', func: bisu ? 'mute' : 'unMute', args:[] }), '*');
+  if (semasa >= 0 && saluran[semasa].jenis === 'iframe') {
+    iframe.contentWindow.postMessage(JSON.stringify({ event:'command', func: bisu ? 'mute' : 'unMute', args:[] }), '*');
+  } else {
+    video.muted = bisu;
+  }
   bunyiLabel();
 });
 kualitiEl.addEventListener('change', function () { if (hls) hls.currentLevel = parseInt(kualitiEl.value, 10); });
