@@ -61,13 +61,17 @@
 </div>
 
 <script>
-                  */
+/* ================= SENARAI SALURAN =================
+   Tambah saluran baru dengan menambah satu baris di sini.
+   jenis : 'm3u8' atau 'iframe'
+   logo  : laluan fail dalam repo GitHub anda, atau pautan gambar penuh.
+           Kosongkan (atau fail tiada) = papar huruf awal nama.                    */
 var PROKSI = 'https://dktv-premium.zqstore80.workers.dev/';
 var CF = 'https://d25tgymtnqzu8s.cloudfront.net/';
 
 var saluran = [
   { nama:'TV1', jenis:'m3u8', logo:'logo/tv1.png', url: PROKSI + CF + 'live/media0/tv1/HLS/tv1.m3u8?id=1' },
-  { nama:'TV2', jenis:'m3u8', logo:'https://imgur.com/1v2qGOd', url: PROKSI + CF + 'live/media0/tv2/HLS/tv2.m3u8?id=1' },
+  { nama:'TV2', jenis:'m3u8', logo:'https://i.imgur.com/1v2qGOd.png', url: PROKSI + CF + 'live/media0/tv2/HLS/tv2.m3u8?id=1' },
   { nama:'Bernama TV', jenis:'iframe', logo:'logo/bernama.png', url:'https://www.youtube.com/embed/live_stream?channel=UCgDq-Hq0Y16rFmZ7kX2_1-A&autoplay=1' },
   { nama:'Makkah Live', jenis:'m3u8', logo:'logo/makkah.png', url: PROKSI + 'https://quranes-edge.itworks.video/playlist.m3u8' },
   { nama:'Wild Earth', jenis:'m3u8', logo:'logo/wildearth.png', url: PROKSI + 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
