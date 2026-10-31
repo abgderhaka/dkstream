@@ -87,7 +87,7 @@
           display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; }
   .kini h3 { align-self:flex-start; margin:0 0 6px; color:var(--hijau); font-size:17px; }
   .kini-logo { width:100%; height:120px; display:flex; align-items:center; justify-content:center; }
-  .kini-logo img { max-width:100%; max-height:100%; object-fit:contain; }
+  .kini-logo img { max-width:100%; max-height:100%; object-fit:contain; border-radius:10px; }
   .kini-logo .lencana { width:96px; height:96px; font-size:36px; }
   .kini-nama { font-size:20px; font-weight:700; }
   .kini-kat { color:var(--malap); font-size:14px; }
@@ -103,8 +103,8 @@
          cursor:pointer; transition:transform .15s, border-color .15s; }
   .kad:hover { transform:translateY(-3px); border-color:var(--hijau); }
   .kad.aktif { border-color:var(--hijau); box-shadow:0 0 20px rgba(33,230,129,.3); }
-  .kad-logo { height:92px; display:flex; align-items:center; justify-content:center; padding:10px; background:linear-gradient(160deg,#173326,#0b1812); }
-  .kad-logo img { max-width:100%; max-height:100%; object-fit:contain; }
+  .kad-logo { height:92px; display:flex; align-items:center; justify-content:center; padding:0; background:linear-gradient(160deg,#173326,#0b1812); }
+  .kad-logo img { display:block; width:100%; height:100%; object-fit:cover; }
   .kad-nama { padding:10px 8px; text-align:center; font-weight:600; font-size:14px; background:rgba(0,0,0,.25); }
   .fav { position:absolute; top:6px; right:6px; width:30px; height:30px; border-radius:50%; border:0; background:rgba(0,0,0,.45); font-size:16px; line-height:1; color:#9bb0a4; }
   .fav.on { color:#ffd54a; }
