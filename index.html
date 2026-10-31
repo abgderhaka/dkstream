@@ -57,6 +57,9 @@
   .penutup { position:absolute; inset:0; z-index:2; display:flex; align-items:center; justify-content:center; pointer-events:none;
              background:radial-gradient(circle at 50% 40%, #1b4932, #08120e 70%); color:var(--malap); font-size:14px; opacity:0; transition:opacity .6s; }
   .pemain.memuat .penutup { opacity:1; }
+  .pusing { width:34px; height:34px; border:3px solid rgba(255,255,255,.15); border-top-color:var(--hijau); border-radius:50%; animation:pusing .9s linear infinite; }
+  @keyframes pusing { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion:reduce) { .pusing { animation:none; } }
   .lencana-live { position:absolute; top:14px; left:14px; z-index:3; background:#e11d2e; color:#fff; font-weight:800; font-size:13px;
                   padding:5px 12px; border-radius:7px; display:none; align-items:center; gap:7px; pointer-events:none; }
   .lencana-live i { width:8px; height:8px; border-radius:50%; background:#fff; }
@@ -157,7 +160,7 @@
           <video id="skrin-tv" autoplay muted playsinline disablepictureinpicture></video>
           <iframe id="skrin-iframe" allow="autoplay; encrypted-media"></iframe>
           <div class="sekat"></div>
-          <div class="penutup">Memuatkan siaran...</div>
+          <div class="penutup"><span class="pusing"></span></div>
           <div class="lencana-live"><i></i>LIVE</div>
           <div class="alat">
             <select id="kualiti" aria-label="Kualiti video" style="display:none"></select>
