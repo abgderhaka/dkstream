@@ -4,79 +4,134 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DK TV Premium</title>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
     <style>
         body { background-color: #121212; color: white; display: flex; flex-direction: column; align-items: center; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
         h1 { color: #00ff00; text-transform: uppercase; letter-spacing: 2px; }
-        
-        /* Gaya untuk skrin video m3u8 dan skrin iframe */
+
         #skrin-tv, #skrin-iframe { width: 100%; max-width: 800px; border-radius: 10px; box-shadow: 0px 0px 20px rgba(0,255,0,0.3); background: #000; }
         #skrin-iframe { height: 450px; border: none; }
-        
-        .senarai-saluran { display: flex; gap: 15px; margin-top: 25px; flex-wrap: wrap; justify-content: center; }
+
+        #status { margin-top: 15px; min-height: 22px; font-size: 14px; color: #aaa; text-align: center; }
+        #status.error { color: #ff5555; }
+
+        .senarai-saluran { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; justify-content: center; }
         button { padding: 10px 25px; background: #333; color: white; border: 2px solid #555; cursor: pointer; border-radius: 5px; font-size: 16px; font-weight: bold; transition: 0.3s; }
         button:hover { background: #00ff00; color: black; border-color: #00ff00; transform: scale(1.1); }
+        button.aktif { background: #00ff00; color: black; border-color: #00ff00; }
     </style>
 </head>
 <body>
 
     <h1>DK TV PREMIUM</h1>
-    
-    <!-- Skrin Pertama: Untuk pautan .m3u8 (HLS) -->
-    <video id="skrin-tv" controls autoplay muted></video>
-    
-    <!-- Skrin Kedua: Untuk pautan YouTube / Laman Web Rasmi (Iframe) -->
+
+    <!-- Skrin untuk pautan .m3u8 (HLS) -->
+    <video id="skrin-tv" controls autoplay muted playsinline></video>
+
+    <!-- Skrin untuk YouTube / laman web (iframe) -->
     <iframe id="skrin-iframe" style="display: none;" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
-    <!-- RUANGAN ISI LINK DAN NAMA SIARAN -->
-    <div class="senarai-saluran">
-        
-        <!-- TEKNIK 1: HLS M3U8 (Guna proksi jika disekat) -->
-        <button onclick="tukarSiaran('m3u8', 'https://dktv-premium.zqstore80.workers.dev/https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8')">WILD EARTH</button>
-        
-        <!-- TEKNIK 2: IFRAME YOUTUBE LIVE (Ini cara web besar siarkan TV Malaysia!) -->
-      <button onclick="tukarSiaran('m3u8', 'https://dktv-premium.zqstore80.workers.dev/https://2bfd741e.b-cdn.net/streamer/6zRGXhNeg6eCQHs8DgaZt3fjRDsA86kjs8mp9ptqVtit.m3u8?expires=1793300698&token=QHtSfyMVa348IGmpVgRV-sw9wHXz9VbpcV-DfsjVufk')">TV MALAYSIA</button>
-        
-        <button onclick="tukarSiaran('iframe', 'https://www.youtube.com/embed/live_stream?channel=UCgDq-Hq0Y16rFmZ7kX2_1-A&autoplay=1')">BERNAMA TV (LIVE)</button>
+    <div id="status"></div>
 
-        <!-- Contoh m3u8 lain (Makkah Live) -->
-        <button onclick="tukarSiaran('m3u8', 'https://dktv-premium.zqstore80.workers.dev/https://quranes-edge.itworks.video/playlist.m3u8')">MAKKAH LIVE</button>
-        
+    <div class="senarai-saluran">
+        <button onclick="tukarSiaran('m3u8', 'https://dktv-premium.zqstore80.workers.dev/https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8', this)">WILD EARTH</button>
+
+        <!-- NOTA: token di bawah ada tarikh luput (expires). Ganti dengan link baru jika tak jalan. -->
+        <button onclick="tukarSiaran('m3u8', 'https://d25tgymtnqzu8s.cloudfront.net/main/A0jyR3/dl_1080p.m3u8', this)">TV1</button>
+
+        <button onclick="tukarSiaran('iframe', 'https://www.youtube.com/embed/live_stream?channel=UCgDq-Hq0Y16rFmZ7kX2_1-A&autoplay=1', this)">BERNAMA TV (LIVE)</button>
+
+        <button onclick="tukarSiaran('m3u8', 'https://dktv-premium.zqstore80.workers.dev/https://quranes-edge.itworks.video/playlist.m3u8', this)">MAKKAH LIVE</button>
     </div>
 
     <script>
         var video = document.getElementById('skrin-tv');
         var iframe = document.getElementById('skrin-iframe');
-        var hls = new Hls();
+        var statusEl = document.getElementById('status');
+        var hls = null;
 
-        function tukarSiaran(jenis, pautan) {
+        function papar(mesej, ralat) {
+            statusEl.textContent = mesej;
+            statusEl.className = ralat ? 'error' : '';
+        }
+
+        function tandaButang(btn) {
+            document.querySelectorAll('.senarai-saluran button').forEach(function (b) { b.classList.remove('aktif'); });
+            if (btn) btn.classList.add('aktif');
+        }
+
+        function hentiHls() {
+            if (hls) { hls.destroy(); hls = null; }
+            video.removeAttribute('src');
+            video.load();
+        }
+
+        function tukarSiaran(jenis, pautan, btn) {
+            tandaButang(btn);
+            hentiHls();
+
             if (jenis === 'm3u8') {
-                // Tutup Iframe, Buka Skrin Video
                 iframe.style.display = 'none';
+                iframe.src = '';
                 video.style.display = 'block';
-                iframe.src = ""; // Matikan bunyi iframe
-                
-                if (Hls.isSupported()) {
+                papar('Memuatkan siaran...');
+
+                if (window.Hls && Hls.isSupported()) {
+                    hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+
+                    hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                        papar('');
+                        video.play().catch(function () {});
+                    });
+
+                    hls.on(Hls.Events.ERROR, function (event, data) {
+                        console.log('HLS error:', data.type, data.details, data.response ? data.response.code : '');
+                        if (!data.fatal) return;
+
+                        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                            var kod = data.response ? data.response.code : 0;
+                            if (kod === 401 || kod === 403) {
+                                papar('Siaran disekat (' + kod + '). Token mungkin sudah tamat tempoh.', true);
+                                hentiHls();
+                            } else if (kod === 404) {
+                                papar('Siaran tidak ditemui (404). Pautan mungkin sudah mati.', true);
+                                hentiHls();
+                            } else {
+                                papar('Masalah rangkaian, mencuba semula...', true);
+                                hls.startLoad();
+                            }
+                        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                            papar('Ralat media, cuba pulihkan...', true);
+                            hls.recoverMediaError();
+                        } else {
+                            papar('Siaran gagal dimainkan.', true);
+                            hentiHls();
+                        }
+                    });
+
                     hls.loadSource(pautan);
                     hls.attachMedia(video);
-                    hls.on(Hls.Events.MANIFEST_PARSED, function() { video.play(); });
                 } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    // Safari / iOS (sokongan HLS asli)
                     video.src = pautan;
-                    video.addEventListener('loadedmetadata', function() { video.play(); });
+                    video.addEventListener('loadedmetadata', function () {
+                        papar('');
+                        video.play().catch(function () {});
+                    }, { once: true });
+                } else {
+                    papar('Pelayar anda tidak menyokong HLS.', true);
                 }
-            } 
-            else if (jenis === 'iframe') {
-                // Tutup Skrin Video, Buka Iframe
+            } else if (jenis === 'iframe') {
+                video.pause();
                 video.style.display = 'none';
                 iframe.style.display = 'block';
-                video.pause(); // Matikan bunyi video
-                
                 iframe.src = pautan;
+                papar('');
             }
         }
 
-        // Mula-mula buka web, mainkan pautan pertama
-        tukarSiaran('m3u8', 'https://dktv-premium.zqstore80.workers.dev/https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8');
+        // Mainkan saluran pertama bila web dibuka
+        tukarSiaran('m3u8', 'https://dktv-premium.zqstore80.workers.dev/https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8', document.querySelector('.senarai-saluran button'));
     </script>
 </body>
 </html>
