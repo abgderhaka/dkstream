@@ -65,8 +65,9 @@
   .kosong span { color:var(--malap); font-size:13px; }
   #status { min-height:22px; margin:10px 4px 0; font-size:14px; color:var(--malap); }
   #status.error { color:#ff6b6b; }
-  .alat { position:absolute; top:12px; right:12px; z-index:4; display:none; gap:8px; align-items:center; opacity:0; transition:opacity .2s; }
+  .alat { position:absolute; bottom:58px; right:12px; z-index:4; display:none; gap:8px; align-items:center; opacity:0; transition:opacity .2s; }
   .pemain.main .alat { display:flex; }
+  .pemain.yt .alat { bottom:12px; }
   .pemain:hover .alat, .alat:focus-within { opacity:1; }
   @media (hover:none) { .pemain.main .alat { opacity:1; } }
   .abtn { width:36px; padding:0 !important; display:inline-flex; align-items:center; justify-content:center; }
