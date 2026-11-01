@@ -215,7 +215,7 @@ var KATEGORI = ['Nasional','Berita','Hiburan','Sukan','Kanak-Kanak','Antarabangs
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
 var statusEl = $('status'), bunyiBtn = $('bunyi'), kualitiEl = $('kualiti'), klikBtn = $('btnKlik');
-var hls = null, cuba = 0, bisu = true, tmrMuat = null, mahuBunyi = false;
+var hls = null, cuba = 0, bisu = true, tmrMuat = null, mahuBunyi = true, sudahGerak = false;
 var semasa = -1, tapis = 'semua', carian = '', fav = [];
 
 try { fav = JSON.parse(localStorage.getItem('dk_fav') || '[]'); } catch (e) { fav = []; }
@@ -229,6 +229,16 @@ function mulaMain() {
     video.muted = true; bisu = true; bunyiLabel();
     video.play().catch(function () {});
   });
+}
+
+function setBunyi(hidup) {
+  bisu = !hidup;
+  if (semasa >= 0 && saluran[semasa].jenis === 'iframe') {
+    iframe.contentWindow.postMessage(JSON.stringify({ event:'command', func: hidup ? 'unMute' : 'mute', args:[] }), '*');
+  } else {
+    video.muted = bisu;
+  }
+  bunyiLabel();
 }
 
 function bunyiLabel() {
@@ -386,15 +396,17 @@ function main(i, klik) {
 
 /* ---------- Butang & carian ---------- */
 bunyiBtn.addEventListener('click', function () {
-  bisu = !bisu;
-  mahuBunyi = !bisu;
-  if (semasa >= 0 && saluran[semasa].jenis === 'iframe') {
-    iframe.contentWindow.postMessage(JSON.stringify({ event:'command', func: bisu ? 'mute' : 'unMute', args:[] }), '*');
-  } else {
-    video.muted = bisu;
-  }
-  bunyiLabel();
+  setBunyi(bisu);            /* sedang senyap -> buka; sedang berbunyi -> tutup */
+  mahuBunyi = !bisu;         /* ingat pilihan pengguna */
 });
+
+/* Klik pertama di mana-mana dalam laman = tindakan pengguna, jadi pelayar benarkan bunyi */
+document.addEventListener('pointerdown', function (e) {
+  if (sudahGerak) return;
+  sudahGerak = true;
+  if (e.target.closest('.alat') || e.target.closest('.kad')) return;
+  if (mahuBunyi && semasa >= 0 && bisu) setBunyi(true);
+}, true);
 klikBtn.addEventListener('click', function () {
   var sekatAktif = pemainEl.classList.toggle('yt');
   klikBtn.classList.toggle('on', !sekatAktif);
