@@ -104,7 +104,7 @@
          cursor:pointer; transition:transform .15s, border-color .15s; }
   .kad:hover { transform:translateY(-3px); border-color:var(--hijau); }
   .kad.aktif { border-color:var(--hijau); box-shadow:0 0 20px rgba(33,230,129,.3); }
-  .kad-logo { height:92px; display:flex; align-items:center; justify-content:center; padding:0; background:linear-gradient(160deg,#173326,#0b1812); }
+  .kad-logo { aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; padding:0; background:linear-gradient(160deg,#173326,#0b1812); }
   .kad-logo img { display:block; width:100%; height:100%; object-fit:cover; }
   .kad-nama { padding:10px 8px; text-align:center; font-weight:600; font-size:14px; background:rgba(0,0,0,.25); }
   .fav { position:absolute; top:6px; right:6px; width:30px; height:30px; border-radius:50%; border:0; background:rgba(0,0,0,.45); font-size:16px; line-height:1; color:#9bb0a4; }
@@ -224,7 +224,9 @@ var SVG_A = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke=
 var IKON_MATI = SVG_A + '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6"/><path d="m21 9-5 6"/></svg>';
 var IKON_HIDUP = SVG_A + '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
 function mulaMain() {
-  video.play().catch(function () {
+  video.play().catch(function (err) {
+    /* AbortError berlaku bila saluran ditukar semasa memuat: abaikan, jangan senyapkan saluran baharu */
+    if (err && err.name !== 'NotAllowedError') return;
     /* pelayar tak benarkan bunyi automatik: mulakan senyap */
     video.muted = true; bisu = true; bunyiLabel();
     video.play().catch(function () {});
