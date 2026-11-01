@@ -60,7 +60,6 @@
   </main>
 </div>
 
-<script src="channel.js"></script>
 <script>
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -267,9 +266,13 @@ $('btnPenuh').addEventListener('click', function () {
 });
 $('tahun').textContent = new Date().getFullYear();
 
-binaSisi();
-senarai();
-main(0);
+/* Muat channel.js dengan cap masa supaya sentiasa versi terbaru (tidak kena cache pelayar/CDN) */
+function mula() { binaSisi(); senarai(); main(0); }
+var failSaluran = document.createElement('script');
+failSaluran.src = 'channel.js?t=' + Date.now();
+failSaluran.onload = mula;
+failSaluran.onerror = function () { $('grid').innerHTML = '<div class="tiada">Gagal memuatkan senarai saluran (channel.js).</div>'; };
+document.head.appendChild(failSaluran);
 </script>
 </body>
 </html>
