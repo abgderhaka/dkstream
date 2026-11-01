@@ -80,7 +80,8 @@
                         color:#fff; font:inherit; font-size:13px; font-weight:600; backdrop-filter:blur(6px); }
   .abtn:hover, .alat select:hover { border-color:var(--hijau); }
   .alat select option { background:#0e1c15; color:#fff; }
-  #bunyi { display:none; }
+  #bunyi, #btnKlik { display:none; }
+  .abtn.on { border-color:var(--hijau); color:var(--hijau); background:rgba(15,51,34,.9); }
 
   /* ---------- Panel Kini Menonton ---------- */
   .kini { background:linear-gradient(160deg,var(--panel2),var(--panel)); border:1px solid var(--garis); border-radius:18px; padding:18px;
@@ -164,6 +165,7 @@
           <div class="lencana-live"><i></i>LIVE</div>
           <div class="alat">
             <select id="kualiti" aria-label="Kualiti video" style="display:none"></select>
+            <button class="abtn" id="btnKlik" type="button" aria-label="Aktifkan klik pada video" title="Aktifkan klik (untuk tekan Skip Ad)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 4 7 17 2.5-7.5L21 11z"/></svg></button>
             <button class="abtn" id="bunyi" type="button"></button>
             <button class="abtn" id="btnPenuh" type="button" aria-label="Skrin penuh" title="Skrin penuh"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
           </div>
@@ -201,7 +203,7 @@ var PROKSI = 'https://dktv-premium.zqstore80.workers.dev/';
 var CF = 'https://d25tgymtnqzu8s.cloudfront.net/';
 
 var saluran = [
-  { nama:'TV1', kat:'Nasional', jenis:'m3u8', logo:'https://imgur.com/ocfeyq5.png', url: PROKSI + CF + 'main/A0jyR3/dl_1080p.m3u8' },
+  { nama:'TV1', kat:'Nasional', jenis:'m3u8', logo:'https://imgur.com/6KuWWMo.png', url: PROKSI + CF + 'live/media0/tv1/HLS/tv1.m3u8?id=1' },
   { nama:'TV2', kat:'Nasional', jenis:'m3u8', logo:'https://i.imgur.com/1v2qGOd.png', url: PROKSI + CF + 'smil:tv2/chunklist_b2596000_slENG.m3u8?id=2' },
   { nama:'Awani', kat:'Berita', jenis:'iframe', logo:'logo/awani.png', url:'https://www.youtube.com/embed/mkVyNaGee8A?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' },
   { nama:'Makkah Live', kat:'Antarabangsa', jenis:'m3u8', logo:'logo/makkah.png', url: PROKSI + 'https://quranes-edge.itworks.video/playlist.m3u8' },
@@ -212,8 +214,8 @@ var KATEGORI = ['Nasional','Berita','Hiburan','Sukan','Kanak-Kanak','Antarabangs
 
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
-var statusEl = $('status'), bunyiBtn = $('bunyi'), kualitiEl = $('kualiti');
-var hls = null, cuba = 0, bisu = true, tmrMuat = null;
+var statusEl = $('status'), bunyiBtn = $('bunyi'), kualitiEl = $('kualiti'), klikBtn = $('btnKlik');
+var hls = null, cuba = 0, bisu = true, tmrMuat = null, mahuBunyi = false;
 var semasa = -1, tapis = 'semua', carian = '', fav = [];
 
 try { fav = JSON.parse(localStorage.getItem('dk_fav') || '[]'); } catch (e) { fav = []; }
@@ -221,6 +223,14 @@ function simpanFav() { try { localStorage.setItem('dk_fav', JSON.stringify(fav))
 var SVG_A = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
 var IKON_MATI = SVG_A + '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6"/><path d="m21 9-5 6"/></svg>';
 var IKON_HIDUP = SVG_A + '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+function mulaMain() {
+  video.play().catch(function () {
+    /* pelayar tak benarkan bunyi automatik: mulakan senyap */
+    video.muted = true; bisu = true; bunyiLabel();
+    video.play().catch(function () {});
+  });
+}
+
 function bunyiLabel() {
   bunyiBtn.innerHTML = bisu ? IKON_MATI : IKON_HIDUP;
   var t = bisu ? 'Buka bunyi' : 'Tutup bunyi';
@@ -296,8 +306,8 @@ function senarai() {
     f.addEventListener('click', function (e) { e.stopPropagation(); togolFav(s.nama); });
 
     kad.appendChild(lg); kad.appendChild(nm); kad.appendChild(f);
-    kad.addEventListener('click', function () { main(i); });
-    kad.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); main(i); } });
+    kad.addEventListener('click', function () { main(i, true); });
+    kad.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); main(i, true); } });
     g.appendChild(kad);
   });
 }
@@ -322,7 +332,7 @@ function kemasKini() {
 /* ---------- Pemain ---------- */
 function hentiHls() { if (hls) { hls.destroy(); hls = null; } video.removeAttribute('src'); video.load(); }
 
-function main(i) {
+function main(i, klik) {
   semasa = i;
   var s = saluran[i];
   senarai(); kemasKini();
@@ -330,9 +340,12 @@ function main(i) {
   clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
 
   pemainEl.classList.add('main');
+  var denganBunyi = !!(klik && mahuBunyi);   /* laman baru dibuka = mesti senyap; selepas klik pengguna, ikut pilihan terakhir */
   pemainEl.classList.toggle('yt', s.jenis === 'iframe');
   bunyiBtn.style.display = 'inline-flex';
-  bisu = true; video.muted = true; bunyiLabel();
+  klikBtn.style.display = s.jenis === 'iframe' ? 'inline-flex' : 'none';
+  klikBtn.classList.remove('on');
+  bisu = !denganBunyi; video.muted = bisu; bunyiLabel();
   kualitiEl.style.display = 'none'; kualitiEl.innerHTML = '';
 
   if (s.jenis === 'iframe') {
@@ -340,7 +353,7 @@ function main(i) {
     /* Tutup paparan awal YouTube (tajuk, "More videos") semasa video dimuatkan */
     pemainEl.classList.add('memuat');
     iframe.onload = function () { tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 4500); };
-    iframe.src = s.url;
+    iframe.src = denganBunyi ? s.url.replace('mute=1', 'mute=0') : s.url;
     return;
   }
   iframe.onload = null; iframe.style.display = 'none'; iframe.src = ''; video.style.display = 'block';
@@ -348,7 +361,7 @@ function main(i) {
 
   if (window.Hls && Hls.isSupported()) {
     hls = new Hls({ enableWorker:true, maxBufferLength:30 });
-    hls.on(Hls.Events.MANIFEST_PARSED, function () { papar(''); binaKualiti(); video.play().catch(function () {}); });
+    hls.on(Hls.Events.MANIFEST_PARSED, function () { papar(''); binaKualiti(); mulaMain(); });
     hls.on(Hls.Events.ERROR, function (e, d) {
       console.log('HLS error:', d.type, d.details, d.response ? d.response.code : '');
       if (!d.fatal) return;
@@ -367,19 +380,26 @@ function main(i) {
     hls.loadSource(s.url); hls.attachMedia(video);
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
     video.src = s.url;
-    video.addEventListener('loadedmetadata', function () { papar(''); video.play().catch(function () {}); }, { once:true });
+    video.addEventListener('loadedmetadata', function () { papar(''); mulaMain(); }, { once:true });
   } else { papar('Pelayar anda tidak menyokong HLS.', true); }
 }
 
 /* ---------- Butang & carian ---------- */
 bunyiBtn.addEventListener('click', function () {
   bisu = !bisu;
+  mahuBunyi = !bisu;
   if (semasa >= 0 && saluran[semasa].jenis === 'iframe') {
     iframe.contentWindow.postMessage(JSON.stringify({ event:'command', func: bisu ? 'mute' : 'unMute', args:[] }), '*');
   } else {
     video.muted = bisu;
   }
   bunyiLabel();
+});
+klikBtn.addEventListener('click', function () {
+  var sekatAktif = pemainEl.classList.toggle('yt');
+  klikBtn.classList.toggle('on', !sekatAktif);
+  var t = sekatAktif ? 'Aktifkan klik (untuk tekan Skip Ad)' : 'Klik diaktifkan: tekan lagi untuk sekat semula';
+  klikBtn.title = t; klikBtn.setAttribute('aria-label', t);
 });
 kualitiEl.addEventListener('change', function () { if (hls) hls.currentLevel = parseInt(kualitiEl.value, 10); });
 $('cari').addEventListener('input', function (e) { carian = e.target.value.trim(); senarai(); });
