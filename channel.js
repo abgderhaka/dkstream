@@ -13,7 +13,8 @@ var saluran = [
     { nama:'Makkah Live', kat:'Antarabangsa', jenis:'iframe', logo:'https://imgur.com/49Hodhz.png', url:'https://www.youtube.com/embed/D6UqW6TuY74?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' },
   { nama:'Wild Earth', kat:'Antarabangsa', jenis:'m3u8', logo:'https://imgur.com/V9FrnD4.png', url: PROKSI + 'https://wildearth-plex.amagi.tv/master.m3u8' },
     { nama:'Tom & Jerry', kat:'Kanak-Kanak', jenis:'iframe', logo:'https://imgur.com/k25OHIf.png', url:'https://www.youtube.com/embed/rEKifG2XUZg?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' },
-   { nama:'Pops Anime', kat:'Kanak-Kanak', jenis:'iframe', logo:'https://imgur.com/7TU6z4o.png', url:'https://www.youtube.com/embed/o4iYsW2E6FY?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' }
+   { nama:'Pops Anime', kat:'Kanak-Kanak', jenis:'iframe', logo:'https://imgur.com/7TU6z4o.png', url:'https://www.youtube.com/embed/o4iYsW2E6FY?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' },
+   { nama:'Marvel HQ', kat:'Kanak-Kanak', jenis:'iframe', logo:'https://imgur.com/F04jnsF.png', url:'https://www.youtube.com/embed/YbQwgoMoztA?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' }
 ];
 var KATEGORI = ['Nasional','Berita','Hiburan','Sukan','Kanak-Kanak','Antarabangsa'];
 /* =================================================== */
