@@ -80,7 +80,7 @@
                         color:#fff; font:inherit; font-size:13px; font-weight:600; backdrop-filter:blur(6px); }
   .abtn:hover, .alat select:hover { border-color:var(--hijau); }
   .alat select option { background:#0e1c15; color:#fff; }
-  #bunyi, #btnKlik { display:none; }
+  #bunyi { display:none; }
   .abtn.on { border-color:var(--hijau); color:var(--hijau); background:rgba(15,51,34,.9); }
 
   /* ---------- Panel Kini Menonton ---------- */
@@ -165,7 +165,6 @@
           <div class="lencana-live"><i></i>LIVE</div>
           <div class="alat">
             <select id="kualiti" aria-label="Kualiti video" style="display:none"></select>
-            <button class="abtn" id="btnKlik" type="button" aria-label="Aktifkan klik pada video" title="Aktifkan klik (untuk tekan Skip Ad)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 4 7 17 2.5-7.5L21 11z"/></svg></button>
             <button class="abtn" id="bunyi" type="button"></button>
             <button class="abtn" id="btnPenuh" type="button" aria-label="Skrin penuh" title="Skrin penuh"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
           </div>
@@ -207,14 +206,14 @@ var saluran = [
   { nama:'TV2', kat:'Nasional', jenis:'m3u8', logo:'https://i.imgur.com/1v2qGOd.png', url: PROKSI + CF + 'smil:tv2/chunklist_b2596000_slENG.m3u8?id=2' },
   { nama:'Awani', kat:'Berita', jenis:'iframe', logo:'logo/awani.png', url:'https://www.youtube.com/embed/mkVyNaGee8A?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' },
   { nama:'Makkah Live', kat:'Antarabangsa', jenis:'m3u8', logo:'logo/makkah.png', url: PROKSI + 'https://quranes-edge.itworks.video/playlist.m3u8' },
-  { nama:'Wild Earth', kat:'Antarabangsa', jenis:'m3u8', logo:'https://imgur.com/JWJzoWe.png', url: PROKSI + 'https://wildearth-plex.amagi.tv/master.m3u8' }
+  { nama:'Wild Earth', kat:'Antarabangsa', jenis:'m3u8', logo:'logo/wildearth.png', url: PROKSI + 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
 ];
 var KATEGORI = ['Nasional','Berita','Hiburan','Sukan','Kanak-Kanak','Antarabangsa'];
 /* =================================================== */
 
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
-var statusEl = $('status'), bunyiBtn = $('bunyi'), kualitiEl = $('kualiti'), klikBtn = $('btnKlik');
+var statusEl = $('status'), bunyiBtn = $('bunyi'), kualitiEl = $('kualiti');
 var hls = null, cuba = 0, bisu = true, tmrMuat = null, mahuBunyi = true, sudahGerak = false;
 var semasa = -1, tapis = 'semua', carian = '', fav = [];
 
@@ -355,8 +354,6 @@ function main(i, klik) {
   var denganBunyi = !!(klik && mahuBunyi);   /* laman baru dibuka = mesti senyap; selepas klik pengguna, ikut pilihan terakhir */
   pemainEl.classList.toggle('yt', s.jenis === 'iframe');
   bunyiBtn.style.display = 'inline-flex';
-  klikBtn.style.display = s.jenis === 'iframe' ? 'inline-flex' : 'none';
-  klikBtn.classList.remove('on');
   bisu = !denganBunyi; video.muted = bisu; bunyiLabel();
   kualitiEl.style.display = 'none'; kualitiEl.innerHTML = '';
 
@@ -409,12 +406,6 @@ document.addEventListener('pointerdown', function (e) {
   if (e.target.closest('.alat') || e.target.closest('.kad')) return;
   if (mahuBunyi && semasa >= 0 && bisu) setBunyi(true);
 }, true);
-klikBtn.addEventListener('click', function () {
-  var sekatAktif = pemainEl.classList.toggle('yt');
-  klikBtn.classList.toggle('on', !sekatAktif);
-  var t = sekatAktif ? 'Aktifkan klik (untuk tekan Skip Ad)' : 'Klik diaktifkan: tekan lagi untuk sekat semula';
-  klikBtn.title = t; klikBtn.setAttribute('aria-label', t);
-});
 kualitiEl.addEventListener('change', function () { if (hls) hls.currentLevel = parseInt(kualitiEl.value, 10); });
 $('cari').addEventListener('input', function (e) { carian = e.target.value.trim(); senarai(); });
 $('btnFav').addEventListener('click', function () { tapis = tapis === 'fav' ? 'semua' : 'fav'; $('btnFav').classList.toggle('on', tapis === 'fav'); senarai(); });
