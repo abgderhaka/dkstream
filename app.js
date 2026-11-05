@@ -1,0 +1,243 @@
+/* Logik pemain DK TV. Dimuat oleh index.html dengan cap masa supaya sentiasa versi terbaru. */
+var $ = function (id) { return document.getElementById(id); };
+var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
+var statusEl = $('status'), bunyiBtn = $('bunyi'), kualitiEl = $('kualiti');
+var hls = null, cuba = 0, bisu = true, tmrMuat = null, mahuBunyi = true, sudahGerak = false;
+var semasa = -1, tapis = 'semua', carian = '', fav = [];
+var idMuat = 0, segarBaru = 0;   /* idMuat: tolak keputusan lama bila saluran ditukar; segarBaru: kiraan ambil token baharu automatik */
+
+try { fav = JSON.parse(localStorage.getItem('dk_fav') || '[]'); } catch (e) { fav = []; }
+function simpanFav() { try { localStorage.setItem('dk_fav', JSON.stringify(fav)); } catch (e) {} }
+var SVG_A = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+var IKON_MATI = SVG_A + '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6"/><path d="m21 9-5 6"/></svg>';
+var IKON_HIDUP = SVG_A + '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+function mulaMain() {
+  video.play().catch(function (err) {
+    /* AbortError berlaku bila saluran ditukar semasa memuat: abaikan, jangan senyapkan saluran baharu */
+    if (err && err.name !== 'NotAllowedError') return;
+    /* pelayar tak benarkan bunyi automatik: mulakan senyap */
+    video.muted = true; bisu = true; bunyiLabel();
+    video.play().catch(function () {});
+  });
+}
+
+function setBunyi(hidup) {
+  bisu = !hidup;
+  if (semasa >= 0 && saluran[semasa].jenis === 'iframe') {
+    iframe.contentWindow.postMessage(JSON.stringify({ event:'command', func: hidup ? 'unMute' : 'mute', args:[] }), '*');
+  } else {
+    video.muted = bisu;
+  }
+  bunyiLabel();
+}
+
+function bunyiLabel() {
+  bunyiBtn.innerHTML = bisu ? IKON_MATI : IKON_HIDUP;
+  var t = bisu ? 'Buka bunyi' : 'Tutup bunyi';
+  bunyiBtn.title = t; bunyiBtn.setAttribute('aria-label', t);
+}
+
+function binaKualiti() {
+  var lv = hls ? hls.levels : null;
+  if (!lv || lv.length < 2) { kualitiEl.style.display = 'none'; return; }
+  var urut = lv.map(function (l, i) { return { i:i, h:l.height || 0, b:l.bitrate || 0 }; })
+               .sort(function (a, b) { return b.h - a.h || b.b - a.b; });
+  var h = '<option value="-1">Auto</option>';
+  urut.forEach(function (o) { h += '<option value="' + o.i + '">' + (o.h ? o.h + 'p' : Math.round(o.b / 1000) + ' kbps') + '</option>'; });
+  kualitiEl.innerHTML = h; kualitiEl.value = '-1'; kualitiEl.style.display = '';
+}
+
+function papar(m, r) { statusEl.textContent = m; statusEl.className = r ? 'error' : ''; }
+
+/* ---------- Logo dengan fallback huruf awal ---------- */
+function buatLogo(s) {
+  var kotak = document.createDocumentFragment();
+  function lencana() { var l = document.createElement('div'); l.className = 'lencana'; l.textContent = s.nama.charAt(0).toUpperCase(); return l; }
+  if (!s.logo) { kotak.appendChild(lencana()); return kotak; }
+  var img = new Image(); img.alt = s.nama;
+  img.onerror = function () { if (img.parentNode) img.parentNode.replaceChild(lencana(), img); };
+  img.src = s.logo; kotak.appendChild(img);
+  return kotak;
+}
+
+/* ---------- Sisi (navigasi) ---------- */
+function binaSisi() {
+  var h = '';
+  h += '<button class="nav" data-t="semua"><span class="ik">&#8962;</span>Utama</button>';
+  h += '<button class="nav" data-t="fav"><span class="ik">&#9733;</span>Kegemaran</button>';
+  h += '<div class="tajuk-kecil">KATEGORI</div>';
+  KATEGORI.forEach(function (k) { h += '<button class="nav kecil" data-t="' + k + '">' + k + '</button>'; });
+  $('sisi').innerHTML = h;
+  $('sisi').addEventListener('click', function (e) {
+    var b = e.target.closest('.nav'); if (!b) return;
+    tapis = b.dataset.t; $('btnFav').classList.toggle('on', tapis === 'fav'); senarai();
+  });
+}
+
+/* ---------- Senarai kad ---------- */
+function senarai() {
+  document.querySelectorAll('.nav').forEach(function (b) { b.classList.toggle('aktif', b.dataset.t === tapis); });
+  var q = carian.toLowerCase();
+  var hasil = [];
+  saluran.forEach(function (s, i) {
+    if (tapis === 'fav' && fav.indexOf(s.nama) < 0) return;
+    if (tapis !== 'semua' && tapis !== 'fav' && s.kat !== tapis) return;
+    if (q && (s.nama + ' ' + s.kat).toLowerCase().indexOf(q) < 0) return;
+    hasil.push(i);
+  });
+  $('tajukSen').textContent = tapis === 'semua' ? 'Semua Saluran' : tapis === 'fav' ? 'Kegemaran' : tapis;
+  $('bilangan').textContent = hasil.length + ' saluran';
+
+  var g = $('grid'); g.innerHTML = '';
+  if (!hasil.length) { g.innerHTML = '<div class="tiada">Tiada saluran ditemui.</div>'; return; }
+
+  hasil.forEach(function (i) {
+    var s = saluran[i];
+    var kad = document.createElement('div');
+    kad.className = 'kad' + (i === semasa ? ' aktif' : '');
+    kad.tabIndex = 0; kad.setAttribute('role', 'button'); kad.setAttribute('aria-label', 'Tonton ' + s.nama);
+
+    var lg = document.createElement('div'); lg.className = 'kad-logo'; lg.appendChild(buatLogo(s));
+    var nm = document.createElement('div'); nm.className = 'kad-nama'; nm.textContent = s.nama;
+    var f = document.createElement('button'); f.type = 'button';
+    f.className = 'fav' + (fav.indexOf(s.nama) >= 0 ? ' on' : '');
+    f.setAttribute('aria-label', 'Kegemaran ' + s.nama);
+    f.innerHTML = fav.indexOf(s.nama) >= 0 ? '&#9733;' : '&#9734;';
+    f.addEventListener('click', function (e) { e.stopPropagation(); togolFav(s.nama); });
+
+    kad.appendChild(lg); kad.appendChild(nm); kad.appendChild(f);
+    kad.addEventListener('click', function () { main(i, true); });
+    kad.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); main(i, true); } });
+    g.appendChild(kad);
+  });
+}
+
+function togolFav(nama) {
+  var p = fav.indexOf(nama);
+  if (p >= 0) fav.splice(p, 1); else fav.push(nama);
+  simpanFav(); senarai(); kemasKini();
+}
+
+/* ---------- Panel Kini Menonton ---------- */
+function kemasKini() {
+  if (semasa < 0) return;
+  var s = saluran[semasa];
+  var l = $('kiniLogo'); l.innerHTML = ''; l.appendChild(buatLogo(s));
+  $('kiniNama').textContent = s.nama;
+  $('kiniKat').textContent = s.kat;
+  var b = $('kiniFav'); b.style.display = 'inline-flex';
+  b.innerHTML = fav.indexOf(s.nama) >= 0 ? '&#9733; Dalam kegemaran' : '&#9734; Tambah kegemaran';
+}
+
+/* ---------- Pemain ---------- */
+function hentiHls() { if (hls) { hls.destroy(); hls = null; } video.removeAttribute('src'); video.load(); }
+
+/* i: indeks saluran | klik: dipicu klik pengguna | ulang: muat semula automatik (kekalkan status bunyi) */
+function main(i, klik, ulang) {
+  semasa = i;
+  var s = saluran[i];
+  var id = ++idMuat;
+  if (!ulang) segarBaru = 0;
+  senarai(); kemasKini();
+  hentiHls(); cuba = 0;
+  clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
+
+  pemainEl.classList.add('main');
+  /* laman baru dibuka = mesti senyap; selepas klik pengguna, ikut pilihan terakhir; muat semula automatik = kekal seperti sekarang */
+  var denganBunyi = ulang ? !bisu : !!(klik && mahuBunyi);
+  pemainEl.classList.toggle('yt', s.jenis === 'iframe');
+  bunyiBtn.style.display = 'inline-flex';
+  bisu = !denganBunyi; video.muted = bisu; bunyiLabel();
+  kualitiEl.style.display = 'none'; kualitiEl.innerHTML = '';
+
+  if (s.jenis === 'iframe') {
+    video.style.display = 'none'; iframe.style.display = 'block'; papar('');
+    /* Tutup paparan awal YouTube (tajuk, "More videos") semasa video dimuatkan */
+    pemainEl.classList.add('memuat');
+    iframe.onload = function () { tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 4500); };
+    iframe.src = denganBunyi ? s.url.replace('mute=1', 'mute=0') : s.url;
+    return;
+  }
+  iframe.onload = null; iframe.style.display = 'none'; iframe.src = 'about:blank'; video.style.display = 'block';
+  papar('');   /* senyap semasa memuat: hanya papar mesej jika ada ralat */
+
+  /* ambilUrl (channel.js): saluran biasa terus pulang URL; saluran dinamik (TV3) ambil token baharu dahulu */
+  ambilUrl(s).then(function (url) {
+    if (id !== idMuat) return;          /* pengguna dah tukar saluran semasa menunggu token */
+    mulaSumber(s, i, url);
+  }).catch(function (err) {
+    if (id !== idMuat) return;
+    console.log('Ralat ambil URL:', err);
+    papar('Gagal mendapatkan siaran ' + s.nama + '. Cuba tekan semula.', true);
+  });
+}
+
+function mulaSumber(s, i, url) {
+  if (window.Hls && Hls.isSupported()) {
+    hls = new Hls({ enableWorker:true, maxBufferLength:30 });
+    hls.on(Hls.Events.MANIFEST_PARSED, function () { segarBaru = 0; papar(''); binaKualiti(); mulaMain(); });
+    hls.on(Hls.Events.ERROR, function (e, d) {
+      console.log('HLS error:', d.type, d.details, d.response ? d.response.code : '');
+      if (!d.fatal) return;
+      if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
+        var kod = d.response ? d.response.code : 0;
+        if (kod === 401 || kod === 403) {
+          /* Saluran bertoken (TV3): token dah tamat, ambil yang baharu secara automatik (maksimum 3 kali) */
+          if (s.dinamik && segarBaru < 3) {
+            segarBaru++;
+            main(i, false, true);   /* ambil token baharu secara senyap */
+            return;
+          }
+          papar('Siaran ditolak oleh server (' + kod + ').', true); hentiHls();
+        }
+        else if (kod === 404) { papar('Pautan tidak ditemui (404).', true); hentiHls(); }
+        else {
+          cuba++;
+          if (cuba > 3) { papar('Gagal sambung (' + d.details + ', kod ' + kod + '). Semak Worker atau pautan.', true); hentiHls(); }
+          else { papar('Masalah rangkaian, mencuba semula (' + cuba + '/3)...', true); hls.startLoad(); }
+        }
+      } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) { hls.recoverMediaError(); }
+      else { papar('Siaran gagal dimainkan.', true); hentiHls(); }
+    });
+    hls.loadSource(url); hls.attachMedia(video);
+  } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = url;
+    video.addEventListener('loadedmetadata', function () { papar(''); mulaMain(); }, { once:true });
+  } else { papar('Pelayar anda tidak menyokong HLS.', true); }
+}
+
+/* ---------- Butang & carian ---------- */
+bunyiBtn.addEventListener('click', function () {
+  setBunyi(bisu);            /* sedang senyap -> buka; sedang berbunyi -> tutup */
+  mahuBunyi = !bisu;         /* ingat pilihan pengguna */
+});
+
+/* Interaksi pertama di mana-mana dalam laman = tindakan pengguna, jadi pelayar benarkan bunyi.
+   Guna pointerup + keydown (pointerdown tidak dikira sebagai interaksi pada skrin sentuh). */
+function interaksiPertama(e) {
+  if (sudahGerak) return;
+  sudahGerak = true;
+  ['pointerup', 'keydown'].forEach(function (t) { document.removeEventListener(t, interaksiPertama, true); });
+  var t = e.target;
+  if (t && t.closest && (t.closest('.alat') || t.closest('.kad'))) return;
+  if (mahuBunyi && semasa >= 0 && bisu) setBunyi(true);
+}
+['pointerup', 'keydown'].forEach(function (t) { document.addEventListener(t, interaksiPertama, true); });
+
+kualitiEl.addEventListener('change', function () { if (hls) hls.currentLevel = parseInt(kualitiEl.value, 10); });
+$('cari').addEventListener('input', function (e) { carian = e.target.value.trim(); senarai(); });
+$('btnFav').addEventListener('click', function () { tapis = tapis === 'fav' ? 'semua' : 'fav'; $('btnFav').classList.toggle('on', tapis === 'fav'); senarai(); });
+$('kiniFav').addEventListener('click', function () { if (semasa >= 0) togolFav(saluran[semasa].nama); });
+$('btnPenuh').addEventListener('click', function () {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else if (pemainEl.requestFullscreen) pemainEl.requestFullscreen();
+});
+$('tahun').textContent = new Date().getFullYear();
+
+/* Muat channel.js dengan cap masa supaya sentiasa versi terbaru (tidak kena cache pelayar/CDN) */
+function mula() { binaSisi(); senarai(); main(0); }
+var failSaluran = document.createElement('script');
+failSaluran.src = 'channel.js?t=' + Date.now();
+failSaluran.onload = mula;
+failSaluran.onerror = function () { $('grid').innerHTML = '<div class="tiada">Gagal memuatkan senarai saluran (channel.js).</div>'; };
+document.head.appendChild(failSaluran);
