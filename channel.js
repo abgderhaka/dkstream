@@ -41,8 +41,14 @@ saluran.forEach(function (s) {
    Saluran dinamik (TV3): minta token baharu daripada Worker, kemudian lalukan melalui PROKSI. */
 function ambilUrl(s) {
   if (!s.dinamik) return Promise.resolve(s.url);
-  return fetch(TV3_API + '?t=' + Date.now(), { cache: 'no-store' })
-    .then(function (r) { return r.json(); })
+  var kawal = new AbortController();
+  var tmr = setTimeout(function () { kawal.abort(); }, 10000);   /* jangan tunggu lebih 10 saat */
+  return fetch(TV3_API + '?t=' + Date.now(), { cache: 'no-store', signal: kawal.signal })
+    .then(function (r) {
+      clearTimeout(tmr);
+      if (!r.ok) throw new Error('Worker TV3 membalas ' + r.status);
+      return r.json();
+    })
     .then(function (j) {
       if (!j.url) throw new Error('Token TV3 tidak dijumpai');
       return PROKSI + j.url;
