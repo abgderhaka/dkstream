@@ -15,7 +15,7 @@ var saluran = [
 
   /* TV3: halaman web, bukan stream m3u8. Jika tidak boleh dipaparkan dalam iframe,
      buang baris ini atau guna sumber m3u8 lain. */
-  { nama:'TV3', kat:'Nasional', jenis:'iframe', logo:'https://i.imgur.com/pBcJNjT.png', url:'https://malaysia-tv.net/tv3-live/' },
+  { nama:'TV3', kat:'Nasional', jenis:'m3u8', via:'proksi', logo:'https://i.imgur.com/pBcJNjT.png', url:'https://2bfd741e.b-cdn.net/streamer/6zRGXhNeg6eCQHs8DgaZt3fjRDsA86kjs8mp9ptqVtit.m3u8?expires=1793878560&token=68kieISa5uLq1zNABd9UlOrwkChIYK85g37hw_pGEew' },
 
   { nama:'TV OKEY', kat:'Nasional', jenis:'m3u8', via:'cf', logo:'https://i.imgur.com/Byx4EaX.png', url:'smil:tv6/chunklist_b2596000_slENG.m3u8?id=6' },
 
