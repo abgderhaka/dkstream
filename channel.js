@@ -1,21 +1,22 @@
 /* ================= SENARAI SALURAN =================
    Tambah saluran baru dengan menambah satu baris di sini.
-   jenis : 'm3u8' atau 'iframe'
-   via   : 'cf'     = awalan PROKSI + CF ditambah automatik (tulis URL pendek sahaja)
-           'proksi' = awalan PROKSI sahaja ditambah automatik
-           (kosong) = URL digunakan seperti yang ditulis
-   kat   : Nasional / Berita / Hiburan / Sukan / Kanak-Kanak / Antarabangsa / Wayang
-   logo  : laluan fail dalam repo GitHub, atau pautan gambar penuh. Kosong = huruf awal.   */
+   jenis  : 'm3u8' atau 'iframe'
+   via    : 'cf'     = awalan PROKSI + CF ditambah automatik (tulis URL pendek sahaja)
+            'proksi' = awalan PROKSI sahaja ditambah automatik
+            (kosong) = URL digunakan seperti yang ditulis
+   dinamik: true = token diambil baharu setiap kali saluran ditekan (lihat ambilUrl)
+   kat    : Nasional / Berita / Hiburan / Sukan / Kanak-Kanak / Antarabangsa / Wayang
+   logo   : laluan fail dalam repo GitHub, atau pautan gambar penuh. Kosong = huruf awal.   */
 var PROKSI = 'https://dktv-premium.zqstore80.workers.dev/';
 var CF = 'https://d25tgymtnqzu8s.cloudfront.net/';
+var TV3_API = 'https://tv3-token.zqstore80.workers.dev/';
 
 var saluran = [
   { nama:'TV1', kat:'Nasional', jenis:'m3u8', via:'cf', logo:'https://i.imgur.com/6KuWWMo.png', url:'main/A0jyR3/dl_1080p.m3u8' },
   { nama:'TV2', kat:'Nasional', jenis:'m3u8', via:'cf', logo:'https://i.imgur.com/1v2qGOd.png', url:'smil:tv2/chunklist_b2596000_slENG.m3u8?id=2' },
 
-  /* TV3: halaman web, bukan stream m3u8. Jika tidak boleh dipaparkan dalam iframe,
-     buang baris ini atau guna sumber m3u8 lain. */
-  { nama:'TV3', kat:'Nasional', jenis:'m3u8', via:'proksi', logo:'https://i.imgur.com/pBcJNjT.png', url:'https://2bfd741e.b-cdn.net/streamer/6zRGXhNeg6eCQHs8DgaZt3fjRDsA86kjs8mp9ptqVtit.m3u8?expires=1793878560&token=68kieISa5uLq1zNABd9UlOrwkChIYK85g37hw_pGEew' },
+  /* TV3: token diambil baharu setiap kali ditekan, melalui Worker tv3-token */
+  { nama:'TV3', kat:'Nasional', jenis:'m3u8', dinamik:true, logo:'https://i.imgur.com/pBcJNjT.png', url:'' },
 
   { nama:'TV OKEY', kat:'Nasional', jenis:'m3u8', via:'cf', logo:'https://i.imgur.com/Byx4EaX.png', url:'smil:tv6/chunklist_b2596000_slENG.m3u8?id=6' },
 
@@ -34,6 +35,19 @@ saluran.forEach(function (s) {
   if (s.via === 'cf') s.url = PROKSI + CF + s.url;
   else if (s.via === 'proksi') s.url = PROKSI + s.url;
 });
+
+/* Pulangkan URL sebenar untuk dimainkan (Promise).
+   Saluran biasa: terus pulangkan s.url.
+   Saluran dinamik (TV3): minta token baharu daripada Worker, kemudian lalukan melalui PROKSI. */
+function ambilUrl(s) {
+  if (!s.dinamik) return Promise.resolve(s.url);
+  return fetch(TV3_API + '?t=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (!j.url) throw new Error('Token TV3 tidak dijumpai');
+      return PROKSI + j.url;
+    });
+}
 
 var KATEGORI = ['Nasional','Berita','Hiburan','Sukan','Kanak-Kanak','Antarabangsa','Wayang'];
 /* =================================================== */
