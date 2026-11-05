@@ -66,6 +66,7 @@ var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
 var statusEl = $('status'), bunyiBtn = $('bunyi'), kualitiEl = $('kualiti');
 var hls = null, cuba = 0, bisu = true, tmrMuat = null, mahuBunyi = true, sudahGerak = false;
 var semasa = -1, tapis = 'semua', carian = '', fav = [];
+var idMuat = 0, segarBaru = 0;   /* idMuat: tolak keputusan lama bila saluran ditukar; segarBaru: kiraan ambil token baharu automatik */
 
 try { fav = JSON.parse(localStorage.getItem('dk_fav') || '[]'); } catch (e) { fav = []; }
 function simpanFav() { try { localStorage.setItem('dk_fav', JSON.stringify(fav)); } catch (e) {} }
@@ -193,15 +194,19 @@ function kemasKini() {
 /* ---------- Pemain ---------- */
 function hentiHls() { if (hls) { hls.destroy(); hls = null; } video.removeAttribute('src'); video.load(); }
 
-function main(i, klik) {
+/* i: indeks saluran | klik: dipicu klik pengguna | ulang: muat semula automatik (kekalkan status bunyi) */
+function main(i, klik, ulang) {
   semasa = i;
   var s = saluran[i];
+  var id = ++idMuat;
+  if (!ulang) segarBaru = 0;
   senarai(); kemasKini();
   hentiHls(); cuba = 0;
   clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
 
   pemainEl.classList.add('main');
-  var denganBunyi = !!(klik && mahuBunyi);   /* laman baru dibuka = mesti senyap; selepas klik pengguna, ikut pilihan terakhir */
+  /* laman baru dibuka = mesti senyap; selepas klik pengguna, ikut pilihan terakhir; muat semula automatik = kekal seperti sekarang */
+  var denganBunyi = ulang ? !bisu : !!(klik && mahuBunyi);
   pemainEl.classList.toggle('yt', s.jenis === 'iframe');
   bunyiBtn.style.display = 'inline-flex';
   bisu = !denganBunyi; video.muted = bisu; bunyiLabel();
@@ -215,18 +220,39 @@ function main(i, klik) {
     iframe.src = denganBunyi ? s.url.replace('mute=1', 'mute=0') : s.url;
     return;
   }
-  iframe.onload = null; iframe.style.display = 'none'; iframe.src = ''; video.style.display = 'block';
-  papar('Memuatkan siaran...');
+  iframe.onload = null; iframe.style.display = 'none'; iframe.src = 'about:blank'; video.style.display = 'block';
+  papar(s.dinamik ? 'Mengambil token siaran...' : 'Memuatkan siaran...');
 
+  /* ambilUrl (channel.js): saluran biasa terus pulang URL; saluran dinamik (TV3) ambil token baharu dahulu */
+  ambilUrl(s).then(function (url) {
+    if (id !== idMuat) return;          /* pengguna dah tukar saluran semasa menunggu token */
+    mulaSumber(s, i, url);
+  }).catch(function (err) {
+    if (id !== idMuat) return;
+    console.log('Ralat ambil URL:', err);
+    papar('Gagal mendapatkan siaran ' + s.nama + '. Cuba tekan semula.', true);
+  });
+}
+
+function mulaSumber(s, i, url) {
   if (window.Hls && Hls.isSupported()) {
     hls = new Hls({ enableWorker:true, maxBufferLength:30 });
-    hls.on(Hls.Events.MANIFEST_PARSED, function () { papar(''); binaKualiti(); mulaMain(); });
+    hls.on(Hls.Events.MANIFEST_PARSED, function () { segarBaru = 0; papar(''); binaKualiti(); mulaMain(); });
     hls.on(Hls.Events.ERROR, function (e, d) {
       console.log('HLS error:', d.type, d.details, d.response ? d.response.code : '');
       if (!d.fatal) return;
       if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
         var kod = d.response ? d.response.code : 0;
-        if (kod === 401 || kod === 403) { papar('Siaran ditolak oleh server (' + kod + ').', true); hentiHls(); }
+        if (kod === 401 || kod === 403) {
+          /* Saluran bertoken (TV3): token dah tamat, ambil yang baharu secara automatik (maksimum 3 kali) */
+          if (s.dinamik && segarBaru < 3) {
+            segarBaru++;
+            papar('Token tamat, mengambil token baharu...', true);
+            main(i, false, true);
+            return;
+          }
+          papar('Siaran ditolak oleh server (' + kod + ').', true); hentiHls();
+        }
         else if (kod === 404) { papar('Pautan tidak ditemui (404).', true); hentiHls(); }
         else {
           cuba++;
@@ -236,9 +262,9 @@ function main(i, klik) {
       } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) { hls.recoverMediaError(); }
       else { papar('Siaran gagal dimainkan.', true); hentiHls(); }
     });
-    hls.loadSource(s.url); hls.attachMedia(video);
+    hls.loadSource(url); hls.attachMedia(video);
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = s.url;
+    video.src = url;
     video.addEventListener('loadedmetadata', function () { papar(''); mulaMain(); }, { once:true });
   } else { papar('Pelayar anda tidak menyokong HLS.', true); }
 }
@@ -249,13 +275,18 @@ bunyiBtn.addEventListener('click', function () {
   mahuBunyi = !bisu;         /* ingat pilihan pengguna */
 });
 
-/* Klik pertama di mana-mana dalam laman = tindakan pengguna, jadi pelayar benarkan bunyi */
-document.addEventListener('pointerdown', function (e) {
+/* Interaksi pertama di mana-mana dalam laman = tindakan pengguna, jadi pelayar benarkan bunyi.
+   Guna pointerup + keydown (pointerdown tidak dikira sebagai interaksi pada skrin sentuh). */
+function interaksiPertama(e) {
   if (sudahGerak) return;
   sudahGerak = true;
-  if (e.target.closest('.alat') || e.target.closest('.kad')) return;
+  ['pointerup', 'keydown'].forEach(function (t) { document.removeEventListener(t, interaksiPertama, true); });
+  var t = e.target;
+  if (t && t.closest && (t.closest('.alat') || t.closest('.kad'))) return;
   if (mahuBunyi && semasa >= 0 && bisu) setBunyi(true);
-}, true);
+}
+['pointerup', 'keydown'].forEach(function (t) { document.addEventListener(t, interaksiPertama, true); });
+
 kualitiEl.addEventListener('change', function () { if (hls) hls.currentLevel = parseInt(kualitiEl.value, 10); });
 $('cari').addEventListener('input', function (e) { carian = e.target.value.trim(); senarai(); });
 $('btnFav').addEventListener('click', function () { tapis = tapis === 'fav' ? 'semua' : 'fav'; $('btnFav').classList.toggle('on', tapis === 'fav'); senarai(); });
