@@ -221,7 +221,7 @@ function main(i, klik, ulang) {
     return;
   }
   iframe.onload = null; iframe.style.display = 'none'; iframe.src = 'about:blank'; video.style.display = 'block';
-  papar(s.dinamik ? 'Mengambil token siaran...' : 'Memuatkan siaran...');
+  papar('');   /* senyap semasa memuat: hanya papar mesej jika ada ralat */
 
   /* ambilUrl (channel.js): saluran biasa terus pulang URL; saluran dinamik (TV3) ambil token baharu dahulu */
   ambilUrl(s).then(function (url) {
@@ -247,8 +247,7 @@ function mulaSumber(s, i, url) {
           /* Saluran bertoken (TV3): token dah tamat, ambil yang baharu secara automatik (maksimum 3 kali) */
           if (s.dinamik && segarBaru < 3) {
             segarBaru++;
-            papar('Token tamat, mengambil token baharu...', true);
-            main(i, false, true);
+            main(i, false, true);   /* ambil token baharu secara senyap */
             return;
           }
           papar('Siaran ditolak oleh server (' + kod + ').', true); hentiHls();
