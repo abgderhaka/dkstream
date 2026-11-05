@@ -13,7 +13,8 @@ var CF = 'https://d25tgymtnqzu8s.cloudfront.net/';
 var TV3_API = 'https://tv3-token.zqstore80.workers.dev/';
 
 var saluran = [
-  { nama:'TV1', kat:'Nasional', jenis:'m3u8', via:'cf', logo:'https://i.imgur.com/6KuWWMo.png', url:'main/A0jyR3/dl_1080p.m3u8' },
+  /* TV1: guna token terkini dari Worker; jika Worker gagal, guna pautan tetap di bawah (cadangan) */
+  { nama:'TV1', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'rtm-tv1-live', via:'cf', logo:'https://i.imgur.com/6KuWWMo.png', url:'main/A0jyR3/dl_1080p.m3u8' },
   { nama:'TV2', kat:'Nasional', jenis:'m3u8', via:'cf', logo:'https://i.imgur.com/1v2qGOd.png', url:'smil:tv2/chunklist_b2596000_slENG.m3u8?id=2' },
 
   /* TV3: token diambil baharu setiap kali ditekan, melalui Worker tv3-token */
@@ -51,8 +52,13 @@ function ambilUrl(s) {
       return r.json();
     })
     .then(function (j) {
-      if (!j.url) throw new Error('Token TV3 tidak dijumpai');
+      if (!j.url) throw new Error('Token tidak dijumpai');
       return PROKSI + j.url;
+    })
+    .catch(function (e) {
+      clearTimeout(tmr);
+      if (s.url) return s.url;   /* ada pautan cadangan (contoh TV1): guna itu */
+      throw e;
     });
 }
 
