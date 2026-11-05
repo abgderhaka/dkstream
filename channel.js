@@ -5,6 +5,7 @@
             'proksi' = awalan PROKSI sahaja ditambah automatik
             (kosong) = URL digunakan seperti yang ditulis
    dinamik: true = token diambil baharu setiap kali saluran ditekan (lihat ambilUrl)
+   halaman: nama halaman di malaysia-tv.net untuk saluran dinamik (contoh 'okey' = malaysia-tv.net/okey/)
    kat    : Nasional / Berita / Hiburan / Sukan / Kanak-Kanak / Antarabangsa / Wayang
    logo   : laluan fail dalam repo GitHub, atau pautan gambar penuh. Kosong = huruf awal.   */
 var PROKSI = 'https://dktv-premium.zqstore80.workers.dev/';
@@ -16,9 +17,9 @@ var saluran = [
   { nama:'TV2', kat:'Nasional', jenis:'m3u8', via:'cf', logo:'https://i.imgur.com/1v2qGOd.png', url:'smil:tv2/chunklist_b2596000_slENG.m3u8?id=2' },
 
   /* TV3: token diambil baharu setiap kali ditekan, melalui Worker tv3-token */
-  { nama:'TV3', kat:'Nasional', jenis:'m3u8', dinamik:true, logo:'https://i.imgur.com/pBcJNjT.png', url:'' },
+  { nama:'TV3', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'tv3-live', logo:'https://i.imgur.com/pBcJNjT.png', url:'' },
 
-  { nama:'TV OKEY', kat:'Nasional', jenis:'m3u8', via:'cf', logo:'https://i.imgur.com/Byx4EaX.png', url:'smil:tv6/chunklist_b2596000_slENG.m3u8?id=6' },
+  { nama:'TV OKEY', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'okey', logo:'https://i.imgur.com/Byx4EaX.png', url:'' },
 
   { nama:'Awani', kat:'Berita', jenis:'iframe', logo:'https://i.imgur.com/RzNTkWo.png', url:'https://www.youtube.com/embed/mkVyNaGee8A?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' },
   { nama:'Makkah Live', kat:'Antarabangsa', jenis:'iframe', logo:'https://i.imgur.com/49Hodhz.png', url:'https://www.youtube.com/embed/D6UqW6TuY74?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' },
@@ -43,7 +44,7 @@ function ambilUrl(s) {
   if (!s.dinamik) return Promise.resolve(s.url);
   var kawal = new AbortController();
   var tmr = setTimeout(function () { kawal.abort(); }, 10000);   /* jangan tunggu lebih 10 saat */
-  return fetch(TV3_API + '?t=' + Date.now(), { cache: 'no-store', signal: kawal.signal })
+  return fetch(TV3_API + '?ch=' + encodeURIComponent(s.halaman || 'tv3-live') + '&t=' + Date.now(), { cache: 'no-store', signal: kawal.signal })
     .then(function (r) {
       clearTimeout(tmr);
       if (!r.ok) throw new Error('Worker TV3 membalas ' + r.status);
