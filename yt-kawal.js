@@ -208,6 +208,19 @@ var YTKawal = (function () {
       masa: function () { return sedia && pemain.getCurrentTime ? pemain.getCurrentTime() || 0 : 0; },
       tempoh: function () { return sedia && pemain.getDuration ? pemain.getDuration() || 0 : 0; },
       lompat: function (saat) { if (sedia) pemain.seekTo(Math.max(0, saat), true); },
+      /* Sari kata (CC): modul 'captions' pemain YouTube */
+      muatSarikata: function () { if (!sedia) return; try { pemain.loadModule('captions'); } catch (e) {} },
+      senaraiSarikata: function () {
+        if (!sedia) return [];
+        try { return pemain.getOption('captions', 'tracklist') || []; } catch (e) { return []; }
+      },
+      pilihSarikata: function (trek) {
+        if (!sedia) return;
+        try {
+          if (trek) { pemain.loadModule('captions'); pemain.setOption('captions', 'track', trek); }
+          else pemain.setOption('captions', 'track', {});
+        } catch (e) {}
+      },
       sedangMain: function () { return sedia && pemain.getPlayerState() === window.YT.PlayerState.PLAYING; },
       adakahBisu: function () { return bisu; },
       kelantangan: function (n) {
