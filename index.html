@@ -385,6 +385,18 @@ $('btnCariBawah').addEventListener('click', bukaCari);
 $('cari').addEventListener('blur', function () { if (!this.value) document.body.classList.remove('cari-buka'); });
 $('cari').addEventListener('input', function (e) { carian = e.target.value.trim(); senarai(); });
 
+/* Butang kawalan pemain: tersembunyi, muncul bila skrin disentuh atau tetikus digerakkan, hilang selepas 3 saat */
+var tmrAlat = null;
+function tunjukAlat() {
+  pemainEl.classList.add('alat-hidup');
+  clearTimeout(tmrAlat);
+  tmrAlat = setTimeout(function () { pemainEl.classList.remove('alat-hidup'); }, 3000);
+}
+['pointerdown', 'pointermove', 'touchstart'].forEach(function (t) { pemainEl.addEventListener(t, tunjukAlat, { passive:true }); });
+/* lepaskan fokus selepas klik/sentuh supaya butang boleh hilang semula (papan kekunci kekal berfungsi) */
+document.querySelector('.alat').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && e.detail) b.blur(); });
+kualitiEl.addEventListener('change', function () { kualitiEl.blur(); });
+
 kualitiEl.addEventListener('change', function () { if (hls) hls.currentLevel = parseInt(kualitiEl.value, 10); });
 $('kiniFav').addEventListener('click', function () { if (semasa >= 0) togolFav(saluran[semasa].nama); });
 function skrinPenuh() {
