@@ -16,6 +16,17 @@
 })();
 </script>
 <noscript><link rel="stylesheet" href="style.css"></noscript>
+<style>
+/* Skrin ralat DK TV: menggantikan skrin ralat YouTube bila saluran gagal / siaran tamat */
+.ralat-skrin { position:absolute; inset:0; z-index:5; display:none; flex-direction:column; align-items:center; justify-content:center; gap:.6rem; padding:1.4rem; text-align:center;
+               background:radial-gradient(circle at 50% 40%, #3a2a08, #0a0703 70%); }
+.pemain.ralat .ralat-skrin { display:flex; }
+.pemain.ralat .lencana-live, .pemain.ralat .alat, .pemain.ralat .penutup { display:none !important; }
+.ralat-skrin svg { width:3.4rem; height:3.4rem; color:var(--emas, #f7c948); opacity:.9; }
+.ralat-skrin strong { font-size:1.3rem; }
+.ralat-skrin span { max-width:30rem; color:var(--malap, #b3a98f); font-size:.92rem; line-height:1.45; }
+.ralat-skrin .btn-garis { margin-top:.4rem; padding:0 1.3rem; }
+</style>
 </head>
 <body>
 
@@ -66,6 +77,12 @@
             <button class="abtn" id="btnPenuh" type="button" aria-label="Skrin penuh" title="Skrin penuh"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
           </div>
           <div class="kosong"><strong>Selamat datang ke DK TV</strong><span>Pilih saluran di bawah untuk mula menonton.</span></div>
+          <div class="ralat-skrin" id="ralatSkrin" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="14" rx="3"/><path d="M8 2.5l4 3.5 4-3.5"/><path d="M9.5 10.5l5 5"/><path d="M14.5 10.5l-5 5"/></svg>
+            <strong id="ralatTajuk"></strong>
+            <span id="ralatMesej"></span>
+            <button class="btn-garis" type="button" id="btnCubaLagi">Cuba semula</button>
+          </div>
         </div>
         <div id="status"></div>
         <div class="episod" id="episod" style="display:none"></div>
@@ -177,6 +194,14 @@ function binaKualiti() {
 }
 
 function papar(m, r) { statusEl.textContent = m; statusEl.className = r ? 'error' : ''; }
+
+/* Skrin ralat DK TV (YouTube tidak lagi menunjukkan logo / skrin ralatnya sendiri) */
+function tunjukRalatSkrin(tajuk, mesej) {
+  $('ralatTajuk').textContent = tajuk;
+  $('ralatMesej').textContent = mesej;
+  pemainEl.classList.add('ralat');
+}
+function tutupRalatSkrin() { pemainEl.classList.remove('ralat'); }
 
 /* ---------- Logo dengan fallback huruf awal ---------- */
 function buatLogo(s) {
@@ -311,7 +336,7 @@ function main(i, klik, ulang, ep) {
   var id = ++idMuat;
   if (!ulang) segarBaru = 0;
   senarai(); kemasKini(); binaEpisod(i);
-  hentiHls(); hentiYt(); cuba = 0;
+  hentiHls(); hentiYt(); cuba = 0; tutupRalatSkrin();
   clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
 
   pemainEl.classList.add('main');
@@ -348,21 +373,24 @@ function main(i, klik, ulang, ep) {
           if (id !== idMuat) return;
           bisu = true; bunyiLabel();   /* pelayar senyapkan video: tunjuk ikon bisu, pengguna boleh tekan untuk bunyi */
         },
-        onTamat: function (m) {
+        onTamat: function () {
           if (id !== idMuat) return;
           clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
-          papar(m, true);
+          hentiYt(); papar('');   /* buang pemain YouTube supaya skrin akhirnya tidak kelihatan */
+          tunjukRalatSkrin(vod ? 'Video telah tamat' : 'Siaran telah tamat',
+            vod ? 'Tekan Cuba semula untuk menonton sekali lagi.' : s.nama + ' tidak bersiaran sekarang. Cuba semula sebentar lagi atau pilih saluran lain.');
         },
         onRalat: function (m, kekal) {
           if (id !== idMuat) return;
-          clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
+          clearTimeout(tmrMuat);
           if (!kekal && segarBaru < 2) {
-            segarBaru++;
-            papar('Sambungan YouTube terganggu, mencuba semula (' + segarBaru + '/2)...', true);
+            segarBaru++;   /* tutupan emas kekal semasa mencuba semula */
             main(i, false, true);
             return;
           }
-          papar(s.nama + ': ' + m, true);
+          pemainEl.classList.remove('memuat');
+          hentiYt(); papar('');   /* buang pemain YouTube supaya skrin ralatnya tidak kelihatan */
+          tunjukRalatSkrin('Saluran tidak tersedia', s.nama + ': ' + m);
         }
       });
       return;
@@ -465,6 +493,7 @@ $('btnKatBawah').addEventListener('click', function () { bukaKat(); });
 $('btnLihat').addEventListener('click', function () { tapis = 'semua'; senarai(); });
 $('btnLive').addEventListener('click', function () { window.scrollTo({ top:0, behavior:'smooth' }); });
 $('btnMula').addEventListener('click', function () { main(semasa >= 0 ? semasa : 0, true); });
+$('btnCubaLagi').addEventListener('click', function () { if (semasa >= 0) main(semasa, true, false, epSemasa >= 0 ? epSemasa : undefined); });
 
 function bukaCari() {
   document.body.classList.add('cari-buka');
