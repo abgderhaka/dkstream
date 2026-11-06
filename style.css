@@ -216,3 +216,6 @@ html.tv .kad:focus-visible { transform:scale(1.06); box-shadow:0 0 2rem rgba(247
 .pemain.vod .lencana-live, .pemain.vod .alat { display:none !important; }
 .pemain.vod #skrin-tv { pointer-events:auto; }
 @media (max-width:760px) { .tab-b { height:2.5rem; padding:0 .9rem; font-size:.88rem; } }
+
+/* Tajuk senarai tak tersembunyi di bawah bar atas bila dilungsurkan ke sini */
+#senaraiSeksyen { scroll-margin-top:9rem; }
