@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#060504">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
 <title>DK TV Premium</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
 <script>
@@ -71,9 +73,15 @@
 .pemain:fullscreen { width:100% !important; height:100% !important; max-width:none; aspect-ratio:auto !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; background:#000; }
 .pemain:-webkit-full-screen { width:100% !important; height:100% !important; max-width:none; aspect-ratio:auto !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; background:#000; }
 .pemain.yt-penuh-css { aspect-ratio:auto !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; }
-/* iPhone (tiada skrin penuh sebenar untuk YouTube / siaran): putar pemain ke landskap bila telefon menegak */
+/* Skrin penuh mod CSS (telefon): pemain memenuhi skrin tanpa Fullscreen API, jadi tiada amaran
+   "To exit full screen" daripada Chrome. Landskap: penuh biasa. Menegak: diputar ke landskap (di bawah). */
+.pemain.yt-penuh-css { position:fixed !important; top:0; left:0; z-index:99999; background:#000; }
+@media (orientation:landscape) {
+  .pemain.yt-penuh-css { width:100vw !important; height:100vh !important; height:100dvh !important; }
+}
+/* Telefon dipegang menegak: putar pemain ke landskap */
 @media (orientation:portrait) {
-  .pemain.yt-penuh-css { width:100vh !important; height:100vw !important; transform-origin:top left; transform:rotate(90deg) translateY(-100%); }
+  .pemain.yt-penuh-css { width:100vh !important; height:100vw !important; width:100dvh !important; height:100dvw !important; transform-origin:top left; transform:rotate(90deg) translateY(-100%); }
 }
 /* Mod iklan: bila YouTube memainkan iklan, pemain YouTube boleh disentuh supaya butang
    "Skip Ad" / "Langkau" boleh ditekan. Tutupan dan bar DK TV disembunyikan sementara. */
@@ -200,7 +208,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v14</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v15</span></footer>
   </main>
 </div>
 
@@ -217,9 +225,6 @@
 /* ================= DK TV: KAWALAN YOUTUBE (IFrame Player API) =================
    Fail ini membolehkan butang pemain DK TV (bisu, skrin penuh, main/jeda) mengawal
    saluran YouTube, sama seperti saluran m3u8.
-
-   Cara pasang (index.html), letak dalam <head> selepas hls.js:
-     <script src="yt-kawal.js"><\/script>
 
    Cara guna ringkas:
      var yt = YTKawal.mainkan(bekasVideo, s.url, {
@@ -477,7 +482,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v14';
+var DKTV_VERSI = 'v15';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -1102,8 +1107,8 @@ kualitiEl.addEventListener('change', function () { if (hls) hls.currentLevel = p
 $('kiniFav').addEventListener('click', function () { if (semasa >= 0) togolFav(saluran[semasa].nama); });
 
 /* Skrin penuh pada bingkai pemain (butang & logo DK TV kekal kelihatan).
-   iPhone: saluran video guna skrin penuh asli iOS; YouTube guna skrin penuh cara CSS. */
-/* Telefon: bila skrin penuh, kunci ke landskap (seperti aplikasi video); bila keluar, lepaskan */
+   Telefon: mod CSS sahaja (tiada Fullscreen API, jadi tiada amaran "To exit full screen" Chrome).
+   Desktop: Fullscreen API biasa. */
 function telefon() { return window.matchMedia && matchMedia('(pointer:coarse)').matches; }
 function kunciLandskap() {
   try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {}); } catch (e) {}
@@ -1120,12 +1125,27 @@ function lepasLandskap() {
 });
 
 function skrinPenuh() {
+  /* Telefon: mod CSS sahaja, tiada amaran "To exit full screen" daripada Chrome */
+  if (telefon()) {
+    var hidup = pemainEl.classList.toggle('yt-penuh-css');
+    document.body.style.overflow = hidup ? 'hidden' : '';
+    if (hidup) history.pushState({ dkPenuh: 1 }, '');
+    else if (history.state && history.state.dkPenuh) history.back();
+    return;
+  }
+  /* Desktop: kod asal */
   var bolehDiv = pemainEl.requestFullscreen || pemainEl.webkitRequestFullscreen;
   if (!bolehDiv && !yt && video.style.display !== 'none' && video.webkitEnterFullscreen) { video.webkitEnterFullscreen(); return; }
   if (window.YTKawal) YTKawal.skrinPenuh(pemainEl);
   else if (document.fullscreenElement) document.exitFullscreen();
   else if (pemainEl.requestFullscreen) pemainEl.requestFullscreen();
 }
+
+/* Butang Back telefon keluar daripada skrin penuh CSS */
+window.addEventListener('popstate', function () {
+  pemainEl.classList.remove('yt-penuh-css');
+  document.body.style.overflow = '';
+});
 $('btnPenuh').addEventListener('click', skrinPenuh);
 $('vodPenuh').addEventListener('click', skrinPenuh);
 $('vodMain').addEventListener('click', togolMainVod);
