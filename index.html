@@ -427,7 +427,14 @@ function bukaCari() {
 $('btnCari').addEventListener('click', bukaCari);
 $('btnCariBawah').addEventListener('click', bukaCari);
 $('cari').addEventListener('blur', function () { if (!this.value) document.body.classList.remove('cari-buka'); });
-$('cari').addEventListener('input', function (e) { carian = e.target.value.trim(); senarai(); });
+var carianSebelum = '';
+function lihatHasil() { $('senaraiSeksyen').scrollIntoView({ behavior:'smooth', block:'start' }); }
+$('cari').addEventListener('input', function (e) {
+  carian = e.target.value.trim(); senarai();
+  if (carian && !carianSebelum) lihatHasil();   /* huruf pertama: bawa paparan ke hasil (senarai ada di bawah pemain) */
+  carianSebelum = carian;
+});
+$('cari').addEventListener('keydown', function (e) { if (e.key === 'Enter' && carian) { lihatHasil(); this.blur(); } });
 
 /* Butang kawalan pemain: tersembunyi, muncul bila skrin disentuh atau tetikus digerakkan, hilang selepas 3 saat */
 var tmrAlat = null;
