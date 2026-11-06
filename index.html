@@ -44,7 +44,6 @@
            background:linear-gradient(180deg, transparent, rgba(0,0,0,.88)); opacity:0; pointer-events:none; transition:opacity .25s; }
 .pemain.ytvod .bar-vod { display:flex; }
 .pemain.ytvod.alat-hidup .bar-vod, .pemain.ytvod.jeda .bar-vod, .bar-vod:focus-within { opacity:1; pointer-events:auto; }
-.pemain.ytvod.memuat .bar-vod { opacity:0 !important; pointer-events:none !important; }
 .bar-vod .masa { font-size:.82rem; font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums; }
 .bar-vod input[type=range] { flex:1; min-width:3rem; height:.35rem; accent-color:var(--emas, #f7c948); cursor:pointer; }
 .layar-jeda { position:absolute; inset:0; z-index:3; display:none; flex-direction:column; align-items:center; justify-content:center; gap:.7rem; padding:1.2rem; text-align:center;
@@ -189,7 +188,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v9</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v10</span></footer>
   </main>
 </div>
 
@@ -455,7 +454,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v9';
+var DKTV_VERSI = 'v10';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -586,10 +585,27 @@ function gunaPilihanCC() {
   }, 1500);
 }
 
+/* YouTube memaparkan tajuk, logo dan "More videos" selama ~3 saat setiap kali video
+   mula, disambung atau dilompat. Jadi bila itu berlaku, tutupan DK TV dipaparkan sekejap,
+   dan video dilompat 3 saat ke belakang supaya tiada babak yang terlepas. */
+var tungguTutup = false, MUNDUR_SAAT = 3;
+function tutupSeketika(ms, siap) {
+  clearTimeout(tmrMuat);
+  pemainEl.classList.add('memuat');
+  tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); tungguTutup = false; if (siap) siap(); }, ms);
+}
+function lompatVod(saat) {
+  if (!yt) return;
+  tungguTutup = true;
+  tutupSeketika(10000);                       /* had keselamatan; dibuang lebih awal bila video bermain */
+  yt.lompat(Math.max(0, saat - MUNDUR_SAAT));
+  yt.main();
+}
+function sambungVod() { if (yt) lompatVod(yt.masa()); }
 function togolMainVod() {
   if (!yt) return;
   if (!yt.sedangMain) { yt.togolMain(); return; }
-  if (yt.sedangMain()) yt.jeda(); else yt.main();
+  if (yt.sedangMain()) yt.jeda(); else sambungVod();
 }
 
 function binaKualiti() {
@@ -787,7 +803,7 @@ function main(i, klik, ulang, ep) {
   senarai(); kemasKini(); binaEpisod(i);
   hentiHls(); hentiYt(); cuba = 0; tutupRalatSkrin(); batalAutoNext();
   clearInterval(tmrBar); pemainEl.classList.remove('ytvod', 'jeda', 'ada-kualiti');
-  tutupMenuCC(); ccAktif = null; tandaCC();
+  tutupMenuCC(); ccAktif = null; tandaCC(); tungguTutup = false;
   clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
 
   pemainEl.classList.add('main');
@@ -826,16 +842,14 @@ function main(i, klik, ulang, ep) {
           segarBaru = 0; papar('');
           if (vod) {
             pemainEl.classList.remove('jeda'); labelMainVod(true);
-            if (!pertama) return;
-            pertama = false;
-            clearTimeout(tmrMuat);
-            /* tunggu tajuk awal YouTube hilang, kemudian mula semula dari 0:00 supaya tiada babak terlepas */
-            tmrMuat = setTimeout(function () {
-              pemainEl.classList.remove('memuat');   /* buang tutupan dahulu, apa pun berlaku */
-              try { if (yt && id === idMuat && yt.masa() < 8) yt.lompat(0); }
-              catch (e) { console.log('[DK TV] yt-kawal.js versi lama? ' + e.message); }
-              if (id === idMuat) gunaPilihanCC();
-            }, 4500);
+            if (pertama) {
+              pertama = false;
+              /* tunggu tajuk awal YouTube hilang (tiada lompat semula: lompat juga memaparkan tajuk) */
+              tutupSeketika(4500, function () { if (id === idMuat) gunaPilihanCC(); });
+            } else if (tungguTutup) {
+              tungguTutup = false;
+              tutupSeketika(MUNDUR_SAAT * 1000 + 300);   /* selepas lompat / sambung */
+            }
             return;
           }
           clearTimeout(tmrMuat);
@@ -1034,7 +1048,7 @@ function skrinPenuh() {
 $('btnPenuh').addEventListener('click', skrinPenuh);
 $('vodPenuh').addEventListener('click', skrinPenuh);
 $('vodMain').addEventListener('click', togolMainVod);
-$('vodSambung').addEventListener('click', function () { if (yt) yt.main(); });
+$('vodSambung').addEventListener('click', sambungVod);
 $('vodBunyi').addEventListener('click', function () { setBunyi(bisu); mahuBunyi = !bisu; });
 $('vodCC').addEventListener('click', function (e) {
   e.stopPropagation();
@@ -1048,7 +1062,7 @@ $('menuCC').addEventListener('click', function (e) {
 document.addEventListener('click', function (e) { if (!e.target.closest('#menuCC, #vodCC')) tutupMenuCC(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') tutupMenuCC(); });
 $('vodSeret').addEventListener('input', function () { sedangSeret = true; kemaskiniBar(); });
-$('vodSeret').addEventListener('change', function () { sedangSeret = false; if (yt) yt.lompat(+this.value); });
+$('vodSeret').addEventListener('change', function () { sedangSeret = false; lompatVod(+this.value); });
 /* klik pada video (filem YouTube) = main / jeda */
 document.querySelector('.sekat').addEventListener('click', function () {
   if (pemainEl.classList.contains('menu-buka')) return;   /* klik pertama hanya menutup menu sari kata */
