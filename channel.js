@@ -56,7 +56,7 @@ var YOUTUBE = [
   { nama:'Tom & Jerry', kat:'Kanak-Kanak', jenis:'iframe', logo:'https://i.imgur.com/k25OHIf.png', url:ytLive('rEKifG2XUZg') },
   { nama:'Pops Anime', kat:'Kanak-Kanak', jenis:'iframe', logo:'https://i.imgur.com/7TU6z4o.png', url:ytLive('o4iYsW2E6FY') },
   { nama:'Marvel HQ', kat:'Kanak-Kanak', jenis:'iframe', logo:'https://i.imgur.com/F04jnsF.png', url:ytLive('YbQwgoMoztA') },
-  { nama:'Warner Bros Entertainment', kat:'Wayang', jenis:'iframe', logo:'https://i.imgur.com/aszsClS.png', url:ytLive('G43NInZfoPE') }
+  { nama:'Warner Bros Entertainment', kat:'Wayang', jenis:'iframe', logo:'https://i.imgur.com/aszsClS.png', url:ytLive('2FXrRwMF9LE') }
 ];
 
 /* ---------- 3. FILEM ----------
