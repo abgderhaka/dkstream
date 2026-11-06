@@ -377,8 +377,9 @@ function main(i, klik, ulang, ep) {
           if (id !== idMuat) return;
           clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
           hentiYt(); papar('');   /* buang pemain YouTube supaya skrin akhirnya tidak kelihatan */
-          tunjukRalatSkrin(vod ? 'Video telah tamat' : 'Siaran telah tamat',
-            vod ? 'Tekan Cuba semula untuk menonton sekali lagi.' : s.nama + ' tidak bersiaran sekarang. Cuba semula sebentar lagi atau pilih saluran lain.');
+          console.log('[DK TV] ' + s.nama + ': siaran tamat');
+          if (vod) tunjukRalatSkrin('Video telah tamat', 'Tekan Cuba semula untuk menonton sekali lagi.');
+          else tunjukRalatSkrin('Saluran dalam penyelenggaraan', 'Sila cuba sebentar lagi atau pilih saluran lain.');
         },
         onRalat: function (m, kekal) {
           if (id !== idMuat) return;
@@ -390,7 +391,8 @@ function main(i, klik, ulang, ep) {
           }
           pemainEl.classList.remove('memuat');
           hentiYt(); papar('');   /* buang pemain YouTube supaya skrin ralatnya tidak kelihatan */
-          tunjukRalatSkrin('Saluran tidak tersedia', s.nama + ': ' + m);
+          console.log('[DK TV] ' + s.nama + ': ' + m);   /* sebab sebenar: lihat F12 > Console */
+          tunjukRalatSkrin('Saluran dalam penyelenggaraan', 'Sila cuba sebentar lagi atau pilih saluran lain.');
         }
       });
       return;
