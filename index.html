@@ -36,6 +36,22 @@
 .kiraan { width:4rem; height:4rem; display:grid; place-items:center; border-radius:50%; border:.2rem solid var(--emas, #f7c948); font-size:1.5rem; font-weight:800; color:var(--emas, #f7c948); }
 .seterusnya .baris { display:flex; gap:.6rem; flex-wrap:wrap; justify-content:center; margin-top:.3rem; }
 .seterusnya .btn-emas, .seterusnya .btn-garis { padding:0 1.3rem; }
+/* Kawalan DK TV untuk filem / siri YouTube */
+.pemain.ytvod .sekat { display:block; }
+.bar-vod { position:absolute; left:0; right:0; bottom:0; z-index:4; display:none; align-items:center; gap:.6rem; padding:2.4rem .9rem .8rem;
+           background:linear-gradient(180deg, transparent, rgba(0,0,0,.88)); opacity:0; pointer-events:none; transition:opacity .25s; }
+.pemain.ytvod .bar-vod { display:flex; }
+.pemain.ytvod.alat-hidup .bar-vod, .pemain.ytvod.jeda .bar-vod, .bar-vod:focus-within { opacity:1; pointer-events:auto; }
+.pemain.ytvod.memuat .bar-vod { opacity:0 !important; pointer-events:none !important; }
+.bar-vod .masa { font-size:.82rem; font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.bar-vod input[type=range] { flex:1; min-width:3rem; height:.35rem; accent-color:var(--emas, #f7c948); cursor:pointer; }
+.layar-jeda { position:absolute; inset:0; z-index:3; display:none; flex-direction:column; align-items:center; justify-content:center; gap:.7rem; padding:1.2rem; text-align:center;
+              background:radial-gradient(circle at 50% 40%, rgba(58,42,8,.97), #0a0703 70%); }
+.pemain.ytvod.jeda .layar-jeda { display:flex; }
+.layar-jeda .main-besar { width:5rem; height:5rem; display:grid; place-items:center; border-radius:50%; color:#2a1c00; background:var(--kilau); box-shadow:0 0 2rem rgba(247,201,72,.45); }
+.layar-jeda .main-besar svg { width:2.2rem; height:2.2rem; margin-left:.25rem; }
+.layar-jeda strong { font-size:1.25rem; }
+.layar-jeda span { color:var(--malap, #b3a98f); font-size:.88rem; }
 .ep-btn.ep-next { margin-left:auto; color:#2a1c00; border-color:var(--emas2, #ffe28a); background:var(--kilau); }
 </style>
 </head>
@@ -93,6 +109,18 @@
             <strong id="ralatTajuk"></strong>
             <span id="ralatMesej"></span>
             <button class="btn-garis" type="button" id="btnCubaLagi">Cuba semula</button>
+          </div>
+          <div class="layar-jeda" id="layarJeda">
+            <button class="main-besar" type="button" id="vodSambung" aria-label="Sambung menonton"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg></button>
+            <strong id="jedaTajuk"></strong>
+            <span>Dijeda</span>
+          </div>
+          <div class="bar-vod" id="barVod">
+            <button class="abtn" id="vodMain" type="button"></button>
+            <span class="masa" id="vodMasa">0:00 / 0:00</span>
+            <input type="range" id="vodSeret" min="0" max="0" step="1" value="0" aria-label="Kedudukan video">
+            <button class="abtn" id="vodBunyi" type="button"></button>
+            <button class="abtn" id="vodPenuh" type="button" aria-label="Skrin penuh" title="Skrin penuh"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
           </div>
           <div class="seterusnya" id="seterusnya" role="dialog" aria-label="Episod seterusnya">
             <small>Episod seterusnya</small>
@@ -198,9 +226,36 @@ function setBunyi(hidup) {
 }
 
 function bunyiLabel() {
-  bunyiBtn.innerHTML = bisu ? IKON_MATI : IKON_HIDUP;
   var t = bisu ? 'Buka bunyi' : 'Tutup bunyi';
-  bunyiBtn.title = t; bunyiBtn.setAttribute('aria-label', t);
+  [bunyiBtn, $('vodBunyi')].forEach(function (b) {
+    b.innerHTML = bisu ? IKON_MATI : IKON_HIDUP;
+    b.title = t; b.setAttribute('aria-label', t);
+  });
+}
+
+/* ---------- Bar kawalan DK TV untuk filem / siri YouTube ---------- */
+var IKON_MAIN = SVG_A + '<path d="M7 4.5v15l12.5-7.5z" fill="currentColor" stroke="none"/></svg>';
+var IKON_JEDA = SVG_A + '<rect x="6" y="4.5" width="4" height="15" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="4.5" width="4" height="15" rx="1" fill="currentColor" stroke="none"/></svg>';
+var tmrBar = null, sedangSeret = false;
+function fmtMasa(t) {
+  t = Math.max(0, Math.floor(t || 0));
+  var j = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), d = t % 60;
+  return (j ? j + ':' + (m < 10 ? '0' : '') : '') + m + ':' + (d < 10 ? '0' : '') + d;
+}
+function labelMainVod(sedangMain) {
+  var b = $('vodMain'), t = sedangMain ? 'Jeda' : 'Main';
+  b.innerHTML = sedangMain ? IKON_JEDA : IKON_MAIN;
+  b.title = t; b.setAttribute('aria-label', t);
+}
+function kemaskiniBar() {
+  if (!yt) return;
+  var t = yt.masa(), j = yt.tempoh(), r = $('vodSeret');
+  if (!sedangSeret) { r.max = Math.floor(j); r.value = Math.floor(t); }
+  $('vodMasa').textContent = fmtMasa(sedangSeret ? +r.value : t) + ' / ' + fmtMasa(j);
+}
+function togolMainVod() {
+  if (!yt) return;
+  if (yt.sedangMain()) yt.jeda(); else yt.main();
 }
 
 function binaKualiti() {
@@ -396,6 +451,7 @@ function main(i, klik, ulang, ep) {
   if (!ulang) segarBaru = 0;
   senarai(); kemasKini(); binaEpisod(i);
   hentiHls(); hentiYt(); cuba = 0; tutupRalatSkrin(); batalAutoNext();
+  clearInterval(tmrBar); pemainEl.classList.remove('ytvod', 'jeda');
   clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
 
   pemainEl.classList.add('main');
@@ -416,21 +472,41 @@ function main(i, klik, ulang, ep) {
     if (window.YTKawal && YTKawal.adakahYouTube(s.url)) {
       iframe.onload = null; iframe.style.display = 'none'; iframe.src = 'about:blank';
       /* Tutup paparan awal YouTube (tajuk, "More videos") sehingga video benar-benar bermain */
-      if (!vod) {
-        pemainEl.classList.add('memuat');
-        tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 10000);   /* had keselamatan */
+      pemainEl.classList.add('memuat');
+      tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 10000);   /* had keselamatan */
+      var pertama = true;
+      if (vod) {
+        /* Filem / siri: kawalan DK TV sendiri (tiada tajuk, logo atau "More videos" YouTube) */
+        pemainEl.classList.add('ytvod');
+        $('jedaTajuk').textContent = s.nama + (s.episod && epSemasa >= 0 ? ' · ' + namaEp(epSemasa) : '');
+        $('vodMasa').textContent = '0:00 / 0:00'; $('vodSeret').value = 0; $('vodSeret').max = 0;
+        labelMainVod(true);
+        tmrBar = setInterval(kemaskiniBar, 500);
       }
       yt = YTKawal.mainkan(pemainEl, denganBunyi ? s.url.replace('mute=1', 'mute=0') : s.url, {
         langsung: !vod,
         onMain: function () {
           if (id !== idMuat) return;
           segarBaru = 0; papar('');
+          if (vod) {
+            pemainEl.classList.remove('jeda'); labelMainVod(true);
+            if (!pertama) return;
+            pertama = false;
+            clearTimeout(tmrMuat);
+            /* tunggu tajuk awal YouTube hilang, kemudian mula semula dari 0:00 supaya tiada babak terlepas */
+            tmrMuat = setTimeout(function () {
+              if (yt && id === idMuat && yt.masa() < 8) yt.lompat(0);
+              pemainEl.classList.remove('memuat');
+            }, 4500);
+            return;
+          }
           clearTimeout(tmrMuat);
           /* tajuk YouTube muncul beberapa saat selepas video mula: tunggu ia hilang dahulu */
           tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 4500);
         },
         onJeda: function () {
-          if (id !== idMuat || vod) return;
+          if (id !== idMuat) return;
+          if (vod) { pemainEl.classList.add('jeda'); labelMainVod(false); kemaskiniBar(); return; }   /* layar jeda DK TV */
           /* Siaran langsung tidak patut dijeda. Bila dijeda, YouTube memaparkan tajuk dan "More videos",
              jadi tunjuk tutupan DK TV dan sambung main semula secara automatik. */
           clearTimeout(tmrMuat);
@@ -611,6 +687,15 @@ function skrinPenuh() {
   YTKawal.skrinPenuh(pemainEl);
 }
 $('btnPenuh').addEventListener('click', skrinPenuh);
+$('vodPenuh').addEventListener('click', skrinPenuh);
+$('vodMain').addEventListener('click', togolMainVod);
+$('vodSambung').addEventListener('click', function () { if (yt) yt.main(); });
+$('vodBunyi').addEventListener('click', function () { setBunyi(bisu); mahuBunyi = !bisu; });
+$('vodSeret').addEventListener('input', function () { sedangSeret = true; kemaskiniBar(); });
+$('vodSeret').addEventListener('change', function () { sedangSeret = false; if (yt) yt.lompat(+this.value); });
+/* klik pada video (filem YouTube) = main / jeda */
+document.querySelector('.sekat').addEventListener('click', function () { if (pemainEl.classList.contains('ytvod')) togolMainVod(); });
+document.querySelector('#barVod').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && e.detail) b.blur(); });
 $('btnPenuhAtas').addEventListener('click', skrinPenuh);
 $('tahun').textContent = new Date().getFullYear();
 
