@@ -29,7 +29,7 @@ var CF = 'https://d25tgymtnqzu8s.cloudfront.net/';
 var TV3_API = 'https://tv3-token.zqstore80.workers.dev/';
 
 function ytLive(id) { return 'https://www.youtube.com/embed/' + id + '?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0'; }
-function ytVod(id)  { return 'https://www.youtube.com/embed/' + id + '?enablejsapi=1&autoplay=1&mute=1&controls=1&rel=0&modestbranding=1&playsinline=1&fs=1'; }
+function ytVod(id)  { return 'https://www.youtube.com/embed/' + id + '?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0'; }   /* kawalan dibuat oleh DK TV */
 
 var BAHAGIAN = [
   { id:'tv',    nama:'Siaran TV', ikon:'📺' },
