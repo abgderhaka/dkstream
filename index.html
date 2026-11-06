@@ -37,7 +37,7 @@
     </div>
   </nav>
 
-  <label class="cari"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="cari" type="search" placeholder="Cari saluran TV..." aria-label="Cari saluran"></label>
+  <label class="cari"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="cari" type="search" placeholder="Cari saluran, filem, siri..." aria-label="Cari saluran"></label>
   <button class="ikon-btn" type="button" id="btnCari" aria-label="Carian"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
   <button class="ikon-btn" type="button" id="btnPenuhAtas" aria-label="Skrin penuh" title="Skrin penuh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
 </header>
@@ -50,10 +50,11 @@
   </aside>
 
   <main>
+    <nav class="bahagian" id="bahagian" aria-label="Bahagian"></nav>
     <div class="atas-main">
       <div>
         <div class="pemain" id="pemain">
-          <video id="skrin-tv" autoplay muted playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" oncontextmenu="return false"></video>
+          <video id="skrin-tv" autoplay muted playsinline disablepictureinpicture disableremoteplayback oncontextmenu="return false"></video>
           <iframe id="skrin-iframe" allow="autoplay; encrypted-media"></iframe>
           <div class="sekat"></div>
           <div class="penutup"><span class="pusing"></span></div>
@@ -66,6 +67,7 @@
           <div class="kosong"><strong>Selamat datang ke DK TV</strong><span>Pilih saluran di bawah untuk mula menonton.</span></div>
         </div>
         <div id="status"></div>
+        <div class="episod" id="episod" style="display:none"></div>
       </div>
 
       <aside class="panel">
@@ -121,6 +123,7 @@ var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
 var statusEl = $('status'), bunyiBtn = $('bunyi'), kualitiEl = $('kualiti');
 var hls = null, cuba = 0, bisu = true, tmrMuat = null, mahuBunyi = true, sudahGerak = false;
 var semasa = -1, tapis = 'semua', carian = '', fav = [];
+var bhg = 'tv', epSemasa = -1;   /* bhg: bahagian aktif; epSemasa: episod siri yang sedang main */
 var idMuat = 0, segarBaru = 0;   /* idMuat: tolak keputusan lama bila saluran ditukar; segarBaru: kiraan ambil token baharu automatik */
 
 /* Pelayar TV pintar: besarkan skala dan paparan fokus (lihat style.css) */
@@ -131,7 +134,7 @@ function simpanFav() { try { localStorage.setItem('dk_fav', JSON.stringify(fav))
 var SVG_A = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
 var IKON_MATI = SVG_A + '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6"/><path d="m21 9-5 6"/></svg>';
 var IKON_HIDUP = SVG_A + '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
-var IKON_KAT = { semua:'📺', 'Nasional':'📡', 'Berita':'📰', 'Hiburan':'🎭', 'Sukan':'⚽', 'Kanak-Kanak':'🧸', 'Antarabangsa':'🌍', 'Wayang':'🎬' };
+var IKON_KAT = { semua:'📺', 'Nasional':'📡', 'Berita':'📰', 'Hiburan':'🎭', 'Sukan':'⚽', 'Kanak-Kanak':'🧸', 'Antarabangsa':'🌍', 'Wayang':'🎬', 'Animasi':'🎨', 'Aksi':'💥', 'Komedi':'😂', 'Drama':'🎞️', 'Seram':'👻', 'Dokumentari':'🌿' };
 
 function mulaMain() {
   video.play().catch(function (err) {
@@ -182,18 +185,26 @@ function buatLogo(s) {
   return kotak;
 }
 
-/* ---------- Kategori (sisi + menu) dengan bilangan saluran ---------- */
+/* ---------- Bahagian (tab) dan kategori (sisi + menu) dengan bilangan ---------- */
+function namaBhg() { for (var k = 0; k < BAHAGIAN.length; k++) if (BAHAGIAN[k].id === bhg) return BAHAGIAN[k].nama; return 'Saluran'; }
 function binaKat() {
+  var dalam = saluran.filter(function (s) { return s.bahagian === bhg; });
   var h = '';
   function baris(t, nama, n) {
     h += '<button class="nav-item" type="button" data-t="' + t + '"><span class="ik">' + (IKON_KAT[t] || '📺') + '</span><span class="nm">' + nama + '</span><span class="bil">' + n + '</span></button>';
   }
-  baris('semua', 'Semua Saluran', saluran.length);
+  baris('semua', 'Semua', dalam.length);
   KATEGORI.forEach(function (k) {
-    var n = saluran.filter(function (s) { return s.kat === k; }).length;
+    var n = dalam.filter(function (s) { return s.kat === k; }).length;
     if (n) baris(k, k, n);
   });
   $('listKat').innerHTML = h; $('menuKat').innerHTML = h;
+  var t = '';
+  BAHAGIAN.forEach(function (b) {
+    var n = saluran.filter(function (s) { return s.bahagian === b.id; }).length;
+    t += '<button type="button" class="tab-b" data-b="' + b.id + '"><span>' + b.ikon + '</span>' + b.nama + '<i>' + n + '</i></button>';
+  });
+  $('bahagian').innerHTML = t;
 }
 
 function bukaKat(buka) {
@@ -208,20 +219,22 @@ function bukaKat(buka) {
 /* ---------- Senarai kad ---------- */
 function senarai() {
   document.querySelectorAll('[data-t]').forEach(function (b) { b.classList.toggle('aktif', b.dataset.t === tapis); });
+  document.querySelectorAll('[data-b]').forEach(function (b) { b.classList.toggle('aktif', b.dataset.b === bhg); });
   var q = carian.toLowerCase();
   var hasil = [];
   saluran.forEach(function (s, i) {
+    if (!q && tapis !== 'fav' && s.bahagian !== bhg) return;   /* carian dan kegemaran merentas semua bahagian */
     if (tapis === 'fav' && fav.indexOf(s.nama) < 0) return;
     if (tapis !== 'semua' && tapis !== 'fav' && s.kat !== tapis) return;
     if (q && (s.nama + ' ' + s.kat).toLowerCase().indexOf(q) < 0) return;
     hasil.push(i);
   });
-  $('tajukSen').textContent = tapis === 'semua' ? 'Semua Saluran' : tapis === 'fav' ? 'Kegemaran' : tapis;
-  $('bilangan').textContent = hasil.length + ' saluran';
+  $('tajukSen').textContent = q ? 'Hasil carian' : tapis === 'fav' ? 'Kegemaran' : tapis === 'semua' ? namaBhg() : tapis;
+  $('bilangan').textContent = hasil.length + ' tajuk';
   $('btnLihat').style.display = tapis === 'semua' ? 'none' : '';
 
   var g = $('grid'); g.innerHTML = '';
-  if (!hasil.length) { g.innerHTML = '<div class="tiada">' + (tapis === 'fav' ? 'Belum ada kegemaran. Tekan bintang pada saluran untuk simpan.' : 'Tiada saluran ditemui.') + '</div>'; return; }
+  if (!hasil.length) { g.innerHTML = '<div class="tiada">' + (tapis === 'fav' ? 'Belum ada kegemaran. Tekan bintang pada saluran untuk simpan.' : (q ? 'Tiada hasil ditemui.' : 'Belum ada kandungan dalam bahagian ini.')) + '</div>'; return; }
 
   hasil.forEach(function (i) {
     var s = saluran[i];
@@ -238,6 +251,7 @@ function senarai() {
     f.addEventListener('click', function (e) { e.stopPropagation(); togolFav(s.nama); });
 
     kad.appendChild(lg); kad.appendChild(nm); kad.appendChild(f);
+    if (s.episod) { var tg = document.createElement('span'); tg.className = 'tag-ep'; tg.textContent = s.episod.length + ' ep'; kad.appendChild(tg); }
     kad.addEventListener('click', function () { main(i, true); });
     kad.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); main(i, true); } });
     g.appendChild(kad);
@@ -256,7 +270,7 @@ function kemasKini() {
   var s = saluran[semasa];
   var l = $('kiniLogo'); l.innerHTML = ''; l.appendChild(buatLogo(s));
   $('kiniNama').textContent = s.nama;
-  $('kiniKat').textContent = s.kat;
+  $('kiniKat').textContent = s.kat + (s.episod && epSemasa >= 0 ? ' · ' + (s.episod[epSemasa].tajuk || 'Episod ' + (epSemasa + 1)) : '');
   var b = $('kiniFav'); b.style.display = 'flex';
   var suka = fav.indexOf(s.nama) >= 0;
   b.classList.toggle('on', suka);
@@ -264,22 +278,44 @@ function kemasKini() {
 }
 
 /* ---------- Pemain ---------- */
-function hentiHls() { if (hls) { hls.destroy(); hls = null; } video.removeAttribute('src'); video.load(); }
+function hentiHls() { if (hls) { hls.destroy(); hls = null; } video.onerror = null; video.removeAttribute('src'); video.load(); }
 
-/* i: indeks saluran | klik: dipicu klik pengguna | ulang: muat semula automatik (kekalkan status bunyi) */
-function main(i, klik, ulang) {
+function gabung(a, b) { var o = {}, k; for (k in a) o[k] = a[k]; for (k in b) o[k] = b[k]; return o; }
+
+/* Butang episod untuk siri */
+function binaEpisod(i) {
+  var el = $('episod'), induk = saluran[i];
+  if (!induk.episod) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  var h = '<div class="ep-tajuk">' + induk.nama + '</div><div class="ep-senarai">';
+  induk.episod.forEach(function (e, n) {
+    h += '<button type="button" class="ep-btn' + (n === epSemasa ? ' aktif' : '') + '" data-ep="' + n + '">' + (e.tajuk || ('Episod ' + (n + 1))) + '</button>';
+  });
+  el.innerHTML = h + '</div>'; el.style.display = '';
+}
+
+/* i: indeks | klik: dipicu klik pengguna | ulang: muat semula automatik (kekalkan bunyi dan episod) | ep: nombor episod (siri) */
+function main(i, klik, ulang, ep) {
   semasa = i;
-  var s = saluran[i];
+  var induk = saluran[i], s = induk;
+  if (induk.episod) {
+    if (ep === undefined) ep = ulang ? epSemasa : 0;
+    if (!(ep >= 0 && ep < induk.episod.length)) ep = 0;
+    s = gabung(induk, induk.episod[ep]);
+    epSemasa = ep;
+  } else { epSemasa = -1; }
   var id = ++idMuat;
   if (!ulang) segarBaru = 0;
-  senarai(); kemasKini();
+  senarai(); kemasKini(); binaEpisod(i);
   hentiHls(); cuba = 0;
   clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
 
   pemainEl.classList.add('main');
   /* laman baru dibuka = mesti senyap; selepas klik pengguna, ikut pilihan terakhir; muat semula automatik = kekal seperti sekarang */
   var denganBunyi = ulang ? !bisu : !!(klik && mahuBunyi);
-  pemainEl.classList.toggle('yt', s.jenis === 'iframe');
+  var vod = !!s.vod;   /* filem / siri: guna kawalan asli (jeda, bar kemajuan) */
+  pemainEl.classList.toggle('vod', vod);
+  pemainEl.classList.toggle('yt', s.jenis === 'iframe' && !vod);
+  video.controls = vod; video.disablePictureInPicture = !vod;
   bunyiBtn.style.display = 'inline-flex';
   bisu = !denganBunyi; video.muted = bisu; bunyiLabel();
   kualitiEl.style.display = 'none'; kualitiEl.innerHTML = '';
@@ -287,7 +323,7 @@ function main(i, klik, ulang) {
   if (s.jenis === 'iframe') {
     video.style.display = 'none'; iframe.style.display = 'block'; papar('');
     /* Tutup paparan awal YouTube (tajuk, "More videos") semasa video dimuatkan */
-    pemainEl.classList.add('memuat');
+    if (!vod) pemainEl.classList.add('memuat');
     iframe.onload = function () { tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 4500); };
     iframe.src = denganBunyi ? s.url.replace('mute=1', 'mute=0') : s.url;
     return;
@@ -297,7 +333,7 @@ function main(i, klik, ulang) {
 
   /* ambilUrl (channel.js): saluran biasa terus pulang URL; saluran dinamik ambil token baharu dahulu */
   ambilUrl(s).then(function (url) {
-    if (id !== idMuat) return;          /* pengguna dah tukar saluran semasa menunggu token */
+    if (id !== idMuat) return;          /* pengguna dah tukar pilihan semasa menunggu token */
     mulaSumber(s, i, url);
   }).catch(function (err) {
     if (id !== idMuat) return;
@@ -307,6 +343,10 @@ function main(i, klik, ulang) {
 }
 
 function mulaSumber(s, i, url) {
+  if (s.jenis === 'mp4' || /\.mp4(\?|#|$)/i.test(url)) {   /* fail video terus */
+    video.onerror = function () { papar('Video tidak dapat dimainkan. Semak pautan.', true); };
+    video.src = url; papar(''); mulaMain(); return;
+  }
   if (window.Hls && Hls.isSupported()) {
     hls = new Hls({ enableWorker:true, maxBufferLength:30 });
     hls.on(Hls.Events.MANIFEST_PARSED, function () { segarBaru = 0; papar(''); binaKualiti(); mulaMain(); });
@@ -360,6 +400,10 @@ function interaksiPertama(e) {
 
 /* Tapis ikut kategori / kegemaran (pil atas, sisi, menu, navigasi bawah) */
 document.addEventListener('click', function (e) {
+  var tb = e.target.closest('[data-b]');
+  if (tb) { bhg = tb.dataset.b; tapis = 'semua'; bukaKat(false); binaKat(); senarai(); return; }
+  var eb = e.target.closest('[data-ep]');
+  if (eb) { main(semasa, true, false, parseInt(eb.dataset.ep, 10)); return; }
   var b = e.target.closest('[data-t]');
   if (b) {
     tapis = (b.dataset.t === 'fav' && tapis === 'fav') ? 'semua' : b.dataset.t;
@@ -414,7 +458,7 @@ document.addEventListener('keydown', function (e) {
   var a = document.activeElement;
   if (a && (a.tagName === 'INPUT' || a.tagName === 'SELECT')) return;
   var senaraiFokus = Array.prototype.filter.call(
-    document.querySelectorAll('.kad, .nav-item, .pil-nav, .ikon-btn, .btn-emas, .btn-garis, .abtn, .bawah button'),
+    document.querySelectorAll('.kad, .tab-b, .ep-btn, .nav-item, .pil-nav, .ikon-btn, .btn-emas, .btn-garis, .abtn, .bawah button'),
     function (el) { return el.offsetParent !== null; });
   if (!senaraiFokus.length) return;
   if (!a || senaraiFokus.indexOf(a) < 0) { senaraiFokus[0].focus(); e.preventDefault(); return; }
