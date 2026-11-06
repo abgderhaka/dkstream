@@ -44,6 +44,7 @@ var TV = [
   { nama:'TV3', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'tv3-live', logo:'https://i.imgur.com/pBcJNjT.png', url:'' },
   { nama:'TV OKEY', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'okey', logo:'https://i.imgur.com/Byx4EaX.png', url:'' },
   { nama:'TV9', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'tv9-malaysia', logo:'https://i.imgur.com/AixrZaH.png', url:'' },
+  { nama:'DIDIK TV', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'didik-tv-live', logo:'https://imgur.com/rhEtQlu.png', url:'' },
   { nama:'Wild Earth', kat:'Antarabangsa', jenis:'m3u8', via:'proksi', logo:'https://i.imgur.com/V9FrnD4.png', url:'https://wildearth-plex.amagi.tv/master.m3u8' }
 ];
 
