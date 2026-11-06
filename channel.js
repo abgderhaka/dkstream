@@ -66,7 +66,7 @@ var YOUTUBE = [
    { nama:'Tajuk', kat:'Komedi', jenis:'iframe', logo:'', url:ytVod('ID_VIDEO') },                          */
 var FILEM = [
   { nama:'THE OLD BODYGUARD', kat:'DK-ENGLISH', jenis:'iframe', logo:'https://imgur.com/bR3jsB6.jpg', url:ytVod('_Tu_SAqNinU') },
-  { nama:'BABY DRIVER', kat:'DK-ENGLISH', jenis:'mp4', logo:'https://vvww.ohflix.my.id/uploads/video_thumb/18244.jpg', url:'https://www.dropbox.com/scl/fo/3qfhjc3i8wvsyemgdqpzw/AI3akp1OSixM8f8amxw061U/Baby%20Driver%202017-1-720.mp4?rlkey=ceuo8qya5rigckhloq5qwmnw5&raw=1' }
+  { nama:'BABY DRIVER', kat:'DK-ENGLISH', jenis:'mp4', logo:'https://vvww.ohflix.my.id/uploads/video_thumb/18244.jpg', url:'https://dl.dropboxusercontent.com/scl/fo/3qfhjc3i8wvsyemgdqpzw/AI3akp1OSixM8f8amxw061U/Baby%20Driver%202017-1-720.mp4?rlkey=ceuo8qya5rigckhloq5qwmnw5&raw=1' }
 ];
 
 /* ---------- 4. SIRI ----------
