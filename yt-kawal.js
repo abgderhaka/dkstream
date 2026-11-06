@@ -205,6 +205,10 @@ var YTKawal = (function () {
         return bisu;
       },
       togolBisu: function () { return kawalan.bisu(!bisu); },
+      masa: function () { return sedia && pemain.getCurrentTime ? pemain.getCurrentTime() || 0 : 0; },
+      tempoh: function () { return sedia && pemain.getDuration ? pemain.getDuration() || 0 : 0; },
+      lompat: function (saat) { if (sedia) pemain.seekTo(Math.max(0, saat), true); },
+      sedangMain: function () { return sedia && pemain.getPlayerState() === window.YT.PlayerState.PLAYING; },
       adakahBisu: function () { return bisu; },
       kelantangan: function (n) {
         if (!sedia) return;
