@@ -41,7 +41,7 @@ var BAHAGIAN = [
 var TV = [
   /* TV1: guna token terkini dari Worker; jika Worker gagal, guna pautan tetap (cadangan) */
   { nama:'TV1', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'rtm-tv1-live', via:'cf', logo:'https://i.imgur.com/6KuWWMo.png', url:'main/A0jyR3/dl_1080p.m3u8' },
-  { nama:'TV2', kat:'Nasional', jenis:'m3u8', via:'cf', logo:'https://i.imgur.com/1v2qGOd.png', url:'smil:tv2/chunklist_b2596000_slENG.m3u8?id=2' },
+   { nama:'TV2', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'tv2-live', logo:'https://i.imgur.com/1v2qGOd.png', url:'' },
   { nama:'TV3', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'tv3-live', logo:'https://i.imgur.com/pBcJNjT.png', url:'' },
   { nama:'TV OKEY', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'okey', logo:'https://i.imgur.com/Byx4EaX.png', url:'' },
   { nama:'TV9', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'tv9-malaysia', logo:'https://i.imgur.com/AixrZaH.png', url:'' },
