@@ -6,7 +6,6 @@
 <meta name="theme-color" content="#060504">
 <title>DK TV Premium</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
-<script src="yt-kawal.js"></script>
 <script>
 /* Muat style.css dengan cap masa supaya perubahan gaya terus sampai */
 (function () {
@@ -248,13 +247,14 @@ function labelMainVod(sedangMain) {
   b.title = t; b.setAttribute('aria-label', t);
 }
 function kemaskiniBar() {
-  if (!yt) return;
+  if (!yt || !yt.masa) return;
   var t = yt.masa(), j = yt.tempoh(), r = $('vodSeret');
   if (!sedangSeret) { r.max = Math.floor(j); r.value = Math.floor(t); }
   $('vodMasa').textContent = fmtMasa(sedangSeret ? +r.value : t) + ' / ' + fmtMasa(j);
 }
 function togolMainVod() {
   if (!yt) return;
+  if (!yt.sedangMain) { yt.togolMain(); return; }
   if (yt.sedangMain()) yt.jeda(); else yt.main();
 }
 
@@ -495,8 +495,9 @@ function main(i, klik, ulang, ep) {
             clearTimeout(tmrMuat);
             /* tunggu tajuk awal YouTube hilang, kemudian mula semula dari 0:00 supaya tiada babak terlepas */
             tmrMuat = setTimeout(function () {
-              if (yt && id === idMuat && yt.masa() < 8) yt.lompat(0);
-              pemainEl.classList.remove('memuat');
+              pemainEl.classList.remove('memuat');   /* buang tutupan dahulu, apa pun berlaku */
+              try { if (yt && id === idMuat && yt.masa() < 8) yt.lompat(0); }
+              catch (e) { console.log('[DK TV] yt-kawal.js versi lama? ' + e.message); }
             }, 4500);
             return;
           }
@@ -684,7 +685,9 @@ $('kiniFav').addEventListener('click', function () { if (semasa >= 0) togolFav(s
 function skrinPenuh() {
   var bolehDiv = pemainEl.requestFullscreen || pemainEl.webkitRequestFullscreen;
   if (!bolehDiv && !yt && video.style.display !== 'none' && video.webkitEnterFullscreen) { video.webkitEnterFullscreen(); return; }
-  YTKawal.skrinPenuh(pemainEl);
+  if (window.YTKawal) YTKawal.skrinPenuh(pemainEl);
+  else if (document.fullscreenElement) document.exitFullscreen();
+  else if (pemainEl.requestFullscreen) pemainEl.requestFullscreen();
 }
 $('btnPenuh').addEventListener('click', skrinPenuh);
 $('vodPenuh').addEventListener('click', skrinPenuh);
@@ -722,13 +725,18 @@ document.addEventListener('keydown', function (e) {
   if (terbaik) { terbaik.focus(); terbaik.scrollIntoView({ block:'nearest', inline:'nearest' }); e.preventDefault(); }
 });
 
-/* Muat channel.js dengan cap masa supaya sentiasa versi terbaru (tidak kena cache pelayar/CDN) */
+/* Muat yt-kawal.js dan channel.js dengan cap masa supaya sentiasa versi terbaru (tidak kena cache pelayar/CDN) */
+function muatSkrip(nama, siap, gagal) {
+  var el = document.createElement('script');
+  el.src = nama + '?t=' + Date.now();
+  el.onload = siap; el.onerror = gagal;
+  document.head.appendChild(el);
+}
 function mula() { binaKat(); senarai(); main(0); }
-var failSaluran = document.createElement('script');
-failSaluran.src = 'channel.js?t=' + Date.now();
-failSaluran.onload = mula;
-failSaluran.onerror = function () { $('grid').innerHTML = '<div class="tiada">Gagal memuatkan senarai saluran (channel.js).</div>'; };
-document.head.appendChild(failSaluran);
+function gagalSaluran() { $('grid').innerHTML = '<div class="tiada">Gagal memuatkan senarai saluran (channel.js).</div>'; }
+muatSkrip('yt-kawal.js',
+  function () { muatSkrip('channel.js', mula, gagalSaluran); },
+  function () { console.log('[DK TV] yt-kawal.js gagal dimuatkan'); muatSkrip('channel.js', mula, gagalSaluran); });
 </script>
 </body>
 </html>
