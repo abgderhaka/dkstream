@@ -1,8 +1,10 @@
 /* ================= DK TV: SENARAI KANDUNGAN (4 BAHAGIAN) =================
+   Dalam fail ini ada 4 senarai berasingan supaya mudah diurus:
    1. TV        : siaran TV langsung (m3u8, atau saluran bertoken dari malaysia-tv.net)
    2. YOUTUBE   : siaran langsung YouTube
    3. FILEM     : filem (mp4, m3u8 atau YouTube)
    4. SIRI      : siri dengan senarai episod
+   Di laman web, TV dan YOUTUBE dipaparkan bersama dalam tab "Siaran TV" (TV dahulu, kemudian YouTube).
 
    Medan yang sama untuk semua:
      nama   : tajuk yang dipaparkan
@@ -29,10 +31,9 @@ function ytLive(id) { return 'https://www.youtube.com/embed/' + id + '?enablejsa
 function ytVod(id)  { return 'https://www.youtube.com/embed/' + id + '?enablejsapi=1&autoplay=1&mute=1&controls=1&rel=0&modestbranding=1&playsinline=1&fs=1'; }
 
 var BAHAGIAN = [
-  { id:'tv',      nama:'Siaran TV',    ikon:'📺' },
-  { id:'youtube', nama:'YouTube Live', ikon:'▶️' },
-  { id:'filem',   nama:'Filem',        ikon:'🎬' },
-  { id:'siri',    nama:'Siri',         ikon:'🍿' }
+  { id:'tv',    nama:'Siaran TV', ikon:'📺' },
+  { id:'filem', nama:'Filem',     ikon:'🎬' },
+  { id:'siri',  nama:'Siri',      ikon:'🍿' }
 ];
 
 /* ---------- 1. SIARAN TV ---------- */
@@ -79,7 +80,8 @@ var saluran = [];
 function daftar(bhg, senarai) {
   senarai.forEach(function (s) { s.bahagian = bhg; s.vod = (bhg === 'filem' || bhg === 'siri'); saluran.push(s); });
 }
-daftar('tv', TV); daftar('youtube', YOUTUBE); daftar('filem', FILEM); daftar('siri', SIRI);
+daftar('tv', TV); daftar('tv', YOUTUBE);   /* YouTube Live dipaparkan dalam tab Siaran TV */
+daftar('filem', FILEM); daftar('siri', SIRI);
 
 function awalan(o, via) {
   if (!o.url) return;
