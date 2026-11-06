@@ -67,6 +67,14 @@
 /* Filem / siri m3u8: pilihan resolusi di penjuru atas kanan (kawalan asli kekal di bawah) */
 .pemain.vod.ada-kualiti .alat { display:flex !important; top:.8rem; bottom:auto; }
 .pemain.vod .alat .abtn { display:none; }
+/* Skrin penuh: pemain memenuhi seluruh skrin (tiada bingkai emas, tiada nisbah 16:9 tetap) */
+.pemain:fullscreen { width:100% !important; height:100% !important; max-width:none; aspect-ratio:auto !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; background:#000; }
+.pemain:-webkit-full-screen { width:100% !important; height:100% !important; max-width:none; aspect-ratio:auto !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; background:#000; }
+.pemain.yt-penuh-css { aspect-ratio:auto !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; }
+/* iPhone (tiada skrin penuh sebenar untuk YouTube / siaran): putar pemain ke landskap bila telefon menegak */
+@media (orientation:portrait) {
+  .pemain.yt-penuh-css { width:100vh !important; height:100vw !important; transform-origin:top left; transform:rotate(90deg) translateY(-100%); }
+}
 .ep-btn.ep-next { margin-left:auto; color:#2a1c00; border-color:var(--emas2, #ffe28a); background:var(--kilau); }
 </style>
 </head>
@@ -188,7 +196,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v12</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v13</span></footer>
   </main>
 </div>
 
@@ -464,7 +472,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v12';
+var DKTV_VERSI = 'v13';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -1067,6 +1075,22 @@ $('kiniFav').addEventListener('click', function () { if (semasa >= 0) togolFav(s
 
 /* Skrin penuh pada bingkai pemain (butang & logo DK TV kekal kelihatan).
    iPhone: saluran video guna skrin penuh asli iOS; YouTube guna skrin penuh cara CSS. */
+/* Telefon: bila skrin penuh, kunci ke landskap (seperti aplikasi video); bila keluar, lepaskan */
+function telefon() { return window.matchMedia && matchMedia('(pointer:coarse)').matches; }
+function kunciLandskap() {
+  try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {}); } catch (e) {}
+}
+function lepasLandskap() {
+  try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+}
+['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) {
+  document.addEventListener(ev, function () {
+    var el = document.fullscreenElement || document.webkitFullscreenElement;
+    if (el && telefon()) kunciLandskap();
+    if (!el) lepasLandskap();
+  });
+});
+
 function skrinPenuh() {
   var bolehDiv = pemainEl.requestFullscreen || pemainEl.webkitRequestFullscreen;
   if (!bolehDiv && !yt && video.style.display !== 'none' && video.webkitEnterFullscreen) { video.webkitEnterFullscreen(); return; }
