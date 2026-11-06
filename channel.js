@@ -18,7 +18,7 @@ var saluran = [
   { nama:'TV3', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'tv3-live', logo:'https://i.imgur.com/pBcJNjT.png', url:'' },
   { nama:'TV OKEY', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'okey', logo:'https://i.imgur.com/Byx4EaX.png', url:'' },
   { nama:'TV9', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'tv9-malaysia', logo:'https://i.imgur.com/AixrZaH.png', url:'' },
-  { nama:'DIDIK TV', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'didik-tv-malaysia', logo:'https://imgur.com/rhEtQlu.png', url:'' },
+  { nama:'DIDIK TV', kat:'Nasional', jenis:'m3u8', dinamik:true, halaman:'didik-tv-live', logo:'https://imgur.com/rhEtQlu.png', url:'' },
    
   { nama:'Awani', kat:'Berita', jenis:'iframe', logo:'https://i.imgur.com/RzNTkWo.png', url:'https://www.youtube.com/embed/mkVyNaGee8A?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' },
   { nama:'Makkah Live', kat:'Antarabangsa', jenis:'iframe', logo:'https://i.imgur.com/49Hodhz.png', url:'https://www.youtube.com/embed/D6UqW6TuY74?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0' },
