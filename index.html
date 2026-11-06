@@ -26,6 +26,17 @@
 .ralat-skrin strong { font-size:1.3rem; }
 .ralat-skrin span { max-width:30rem; color:var(--malap, #b3a98f); font-size:.92rem; line-height:1.45; }
 .ralat-skrin .btn-garis { margin-top:.4rem; padding:0 1.3rem; }
+/* Episod seterusnya (auto next) */
+.seterusnya { position:absolute; inset:0; z-index:6; display:none; flex-direction:column; align-items:center; justify-content:center; gap:.7rem; padding:1.4rem; text-align:center;
+              background:radial-gradient(circle at 50% 40%, #3a2a08, #0a0703 70%); }
+.pemain.ada-seterusnya .seterusnya { display:flex; }
+.pemain.ada-seterusnya .lencana-live, .pemain.ada-seterusnya .alat, .pemain.ada-seterusnya .penutup { display:none !important; }
+.seterusnya small { color:var(--malap, #b3a98f); font-size:.85rem; }
+.seterusnya strong { font-size:1.35rem; }
+.kiraan { width:4rem; height:4rem; display:grid; place-items:center; border-radius:50%; border:.2rem solid var(--emas, #f7c948); font-size:1.5rem; font-weight:800; color:var(--emas, #f7c948); }
+.seterusnya .baris { display:flex; gap:.6rem; flex-wrap:wrap; justify-content:center; margin-top:.3rem; }
+.seterusnya .btn-emas, .seterusnya .btn-garis { padding:0 1.3rem; }
+.ep-btn.ep-next { margin-left:auto; color:#2a1c00; border-color:var(--emas2, #ffe28a); background:var(--kilau); }
 </style>
 </head>
 <body>
@@ -82,6 +93,15 @@
             <strong id="ralatTajuk"></strong>
             <span id="ralatMesej"></span>
             <button class="btn-garis" type="button" id="btnCubaLagi">Cuba semula</button>
+          </div>
+          <div class="seterusnya" id="seterusnya" role="dialog" aria-label="Episod seterusnya">
+            <small>Episod seterusnya</small>
+            <strong id="seterusnyaTajuk"></strong>
+            <div class="kiraan" id="seterusnyaKira">10</div>
+            <div class="baris">
+              <button class="btn-emas" type="button" id="btnSeterusnyaKini"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>Main sekarang</button>
+              <button class="btn-garis" type="button" id="btnSeterusnyaBatal">Batal</button>
+            </div>
           </div>
         </div>
         <div id="status"></div>
@@ -196,12 +216,48 @@ function binaKualiti() {
 function papar(m, r) { statusEl.textContent = m; statusEl.className = r ? 'error' : ''; }
 
 /* Skrin ralat DK TV (YouTube tidak lagi menunjukkan logo / skrin ralatnya sendiri) */
-function tunjukRalatSkrin(tajuk, mesej) {
+function tunjukRalatSkrin(tajuk, mesej, butang) {
   $('ralatTajuk').textContent = tajuk;
   $('ralatMesej').textContent = mesej;
+  $('btnCubaLagi').textContent = butang || 'Cuba semula';
   pemainEl.classList.add('ralat');
 }
 function tutupRalatSkrin() { pemainEl.classList.remove('ralat'); }
+
+/* ---------- Filem / siri tamat: auto next untuk siri ---------- */
+var AUTO_NEXT_SAAT = 10;
+var tmrNext = null;
+function epSeterusnya() {
+  if (semasa < 0) return -1;
+  var e = saluran[semasa].episod;
+  return (e && epSemasa >= 0 && epSemasa + 1 < e.length) ? epSemasa + 1 : -1;
+}
+function namaEp(n) { var e = saluran[semasa].episod[n]; return e.tajuk || ('Episod ' + (n + 1)); }
+function batalAutoNext() { clearInterval(tmrNext); tmrNext = null; pemainEl.classList.remove('ada-seterusnya'); }
+function mainSeterusnya() {
+  var n = epSeterusnya();
+  batalAutoNext();
+  if (n >= 0) main(semasa, true, false, n);
+}
+function tamatVod() {
+  var n = epSeterusnya();
+  if (n < 0) {   /* filem, atau episod terakhir siri */
+    var akhir = saluran[semasa].episod ? 'Itu episod terakhir.' : 'Terima kasih kerana menonton.';
+    tunjukRalatSkrin('Video telah tamat', akhir, 'Tonton semula');
+    return;
+  }
+  var baki = AUTO_NEXT_SAAT;
+  $('seterusnyaTajuk').textContent = namaEp(n);
+  $('seterusnyaKira').textContent = baki;
+  pemainEl.classList.add('ada-seterusnya');
+  $('btnSeterusnyaKini').focus({ preventScroll:true });   /* alat kawalan jauh TV: tekan OK terus main */
+  clearInterval(tmrNext);
+  tmrNext = setInterval(function () {
+    baki--;
+    $('seterusnyaKira').textContent = baki;
+    if (baki <= 0) mainSeterusnya();
+  }, 1000);
+}
 
 /* ---------- Logo dengan fallback huruf awal ---------- */
 function buatLogo(s) {
@@ -320,6 +376,9 @@ function binaEpisod(i) {
   induk.episod.forEach(function (e, n) {
     h += '<button type="button" class="ep-btn' + (n === epSemasa ? ' aktif' : '') + '" data-ep="' + n + '">' + (e.tajuk || ('Episod ' + (n + 1))) + '</button>';
   });
+  if (epSemasa >= 0 && epSemasa + 1 < induk.episod.length) {
+    h += '<button type="button" class="ep-btn ep-next" data-ep="' + (epSemasa + 1) + '">Seterusnya &#9654;</button>';
+  }
   el.innerHTML = h + '</div>'; el.style.display = '';
 }
 
@@ -336,7 +395,7 @@ function main(i, klik, ulang, ep) {
   var id = ++idMuat;
   if (!ulang) segarBaru = 0;
   senarai(); kemasKini(); binaEpisod(i);
-  hentiHls(); hentiYt(); cuba = 0; tutupRalatSkrin();
+  hentiHls(); hentiYt(); cuba = 0; tutupRalatSkrin(); batalAutoNext();
   clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
 
   pemainEl.classList.add('main');
@@ -387,7 +446,7 @@ function main(i, klik, ulang, ep) {
           clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
           hentiYt(); papar('');   /* buang pemain YouTube supaya skrin akhirnya tidak kelihatan */
           console.log('[DK TV] ' + s.nama + ': siaran tamat');
-          if (vod) tunjukRalatSkrin('Video telah tamat', 'Tekan Cuba semula untuk menonton sekali lagi.');
+          if (vod) tamatVod();
           else tunjukRalatSkrin('Saluran dalam penyelenggaraan', 'Sila cuba sebentar lagi atau pilih saluran lain.');
         },
         onRalat: function (m, kekal) {
@@ -415,6 +474,7 @@ function main(i, klik, ulang, ep) {
     return;
   }
   iframe.onload = null; iframe.style.display = 'none'; iframe.src = 'about:blank'; video.style.display = 'block';
+  video.onended = vod ? function () { if (id === idMuat) tamatVod(); } : null;
   papar('');   /* senyap semasa memuat: hanya papar mesej jika ada ralat */
 
   /* ambilUrl (channel.js): saluran biasa terus pulang URL; saluran dinamik ambil token baharu dahulu */
@@ -505,6 +565,11 @@ $('btnLihat').addEventListener('click', function () { tapis = 'semua'; senarai()
 $('btnLive').addEventListener('click', function () { window.scrollTo({ top:0, behavior:'smooth' }); });
 $('btnMula').addEventListener('click', function () { main(semasa >= 0 ? semasa : 0, true); });
 $('btnCubaLagi').addEventListener('click', function () { if (semasa >= 0) main(semasa, true, false, epSemasa >= 0 ? epSemasa : undefined); });
+$('btnSeterusnyaKini').addEventListener('click', mainSeterusnya);
+$('btnSeterusnyaBatal').addEventListener('click', function () {
+  batalAutoNext();
+  tunjukRalatSkrin('Video telah tamat', 'Pilih episod di bawah, atau tonton semula.', 'Tonton semula');
+});
 
 function bukaCari() {
   document.body.classList.add('cari-buka');
