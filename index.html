@@ -36,7 +36,10 @@
 .seterusnya .baris { display:flex; gap:.6rem; flex-wrap:wrap; justify-content:center; margin-top:.3rem; }
 .seterusnya .btn-emas, .seterusnya .btn-garis { padding:0 1.3rem; }
 /* Kawalan DK TV untuk filem / siri YouTube */
-.pemain.ytvod .sekat { display:block; }
+.pemain.ytvod .sekat { display:block !important; z-index:2; }
+/* Pemain YouTube langsung tidak menerima tetikus / sentuhan: tajuk, logo dan "More videos"
+   YouTube hanya muncul bila tetikus berada atas pemainnya, jadi ia tidak akan muncul lagi. */
+.pemain.ytvod .yt-slot, .pemain.yt .yt-slot, .yt-slot iframe { pointer-events:none !important; }
 .bar-vod { position:absolute; left:0; right:0; bottom:0; z-index:4; display:none; align-items:center; gap:.6rem; padding:2.4rem .9rem .8rem;
            background:linear-gradient(180deg, transparent, rgba(0,0,0,.88)); opacity:0; pointer-events:none; transition:opacity .25s; }
 .pemain.ytvod .bar-vod { display:flex; }
@@ -186,7 +189,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV.</footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v9</span></footer>
   </main>
 </div>
 
@@ -452,6 +455,8 @@ var YTKawal = (function () {
 
 </script>
 <script>
+var DKTV_VERSI = 'v9';
+console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
 var statusEl = $('status'), bunyiBtn = $('bunyi'), kualitiEl = $('kualiti');
