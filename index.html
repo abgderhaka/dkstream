@@ -208,7 +208,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v15</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v16</span></footer>
   </main>
 </div>
 
@@ -482,7 +482,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v15';
+var DKTV_VERSI = 'v16';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -1124,9 +1124,17 @@ function lepasLandskap() {
   });
 });
 
+/* Dibuka sebagai aplikasi yang dipasang (PWA): sudah tanpa bar alamat */
+function sudahPwa() {
+  try {
+    return (window.matchMedia && (matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches)) || navigator.standalone === true;
+  } catch (e) { return false; }
+}
+
 function skrinPenuh() {
-  /* Telefon: mod CSS sahaja, tiada amaran "To exit full screen" daripada Chrome */
-  if (telefon()) {
+  /* Aplikasi dipasang (telefon): mod CSS, sudah penuh dan tiada amaran Chrome.
+     Chrome biasa: guna Fullscreen API di bawah supaya bar alamat betul-betul hilang. */
+  if (telefon() && sudahPwa()) {
     var hidup = pemainEl.classList.toggle('yt-penuh-css');
     document.body.style.overflow = hidup ? 'hidden' : '';
     if (hidup) history.pushState({ dkPenuh: 1 }, '');
@@ -1205,6 +1213,8 @@ function muatSkrip(nama, siap, gagal) {
 }
 function mula() { binaKat(); senarai(); main(0); }
 function gagalSaluran() { $('grid').innerHTML = '<div class="tiada">Gagal memuatkan senarai saluran (channel.js).</div>'; }
+/* Service worker kecil supaya Chrome mengenali laman ini sebagai aplikasi yang boleh dipasang */
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }
 muatSkrip('channel.js', mula, gagalSaluran);
 </script>
 </body>
