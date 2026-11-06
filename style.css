@@ -84,10 +84,10 @@ button { font:inherit; color:inherit; cursor:pointer; background:none; border:0;
 .kosong span { color:var(--malap); font-size:.9rem; }
 #status { min-height:1.4rem; margin:.6rem .3rem 0; font-size:.9rem; color:var(--malap); }
 #status.error { color:#ff7b7b; }
-.alat { position:absolute; right:.8rem; bottom:.8rem; z-index:4; display:none; align-items:center; gap:.5rem; opacity:0; transition:opacity .2s; }
+.alat { position:absolute; right:.8rem; bottom:.8rem; z-index:4; display:none; align-items:center; gap:.5rem; opacity:0; pointer-events:none; transition:opacity .25s; }
 .pemain.main .alat { display:flex; }
-.pemain:hover .alat, .alat:focus-within { opacity:1; }
-@media (hover:none) { .pemain.main .alat { opacity:1; } }
+/* Butang tersembunyi; muncul bila skrin disentuh / tetikus digerakkan (kelas alat-hidup ditetapkan oleh skrip), atau bila difokus dengan papan kekunci / alat kawalan jauh */
+.pemain.alat-hidup .alat, .alat:focus-within { opacity:1; pointer-events:auto; }
 .abtn, .alat select { height:2.3rem; padding:0 .8rem; border-radius:.6rem; border:1px solid rgba(255,226,138,.4); background:rgba(0,0,0,.7); color:#fff; font:inherit; font-size:.85rem; font-weight:600; backdrop-filter:blur(6px); }
 .abtn { width:2.3rem; padding:0; display:inline-flex; align-items:center; justify-content:center; }
 .abtn:hover, .alat select:hover { border-color:var(--emas); }
