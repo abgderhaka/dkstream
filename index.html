@@ -367,7 +367,16 @@ function main(i, klik, ulang, ep) {
           if (id !== idMuat) return;
           segarBaru = 0; papar('');
           clearTimeout(tmrMuat);
-          tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 2500);
+          /* tajuk YouTube muncul beberapa saat selepas video mula: tunggu ia hilang dahulu */
+          tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 4500);
+        },
+        onJeda: function () {
+          if (id !== idMuat || vod) return;
+          /* Siaran langsung tidak patut dijeda. Bila dijeda, YouTube memaparkan tajuk dan "More videos",
+             jadi tunjuk tutupan DK TV dan sambung main semula secara automatik. */
+          clearTimeout(tmrMuat);
+          pemainEl.classList.add('memuat');
+          setTimeout(function () { if (yt && id === idMuat) yt.main(); }, 300);
         },
         onBisuPaksa: function () {
           if (id !== idMuat) return;
