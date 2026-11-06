@@ -26,9 +26,11 @@
 var PROKSI = 'https://dktv-premium.zqstore80.workers.dev/';
 var CF = 'https://d25tgymtnqzu8s.cloudfront.net/';
 var TV3_API = 'https://tv3-token.zqstore80.workers.dev/';
+var YT_M3U8 = 'https://yt-live-m3u8.zqstore80.workers.dev/'; // Worker baharu untuk langkau iframe/iklan YouTube
 
 function ytLive(id) { return 'https://www.youtube.com/embed/' + id + '?enablejsapi=1&autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&disablekb=1&fs=0'; }
 function ytVod(id)  { return 'https://www.youtube.com/embed/' + id + '?enablejsapi=1&autoplay=1&mute=1&controls=1&rel=0&modestbranding=1&playsinline=1&fs=1'; }
+function ytRawStream(id) { return YT_M3U8 + '?id=' + id; } // Fungsi tarik m3u8 dari Worker
 
 var BAHAGIAN = [
   { id:'tv',    nama:'Siaran TV', ikon:'📺' },
@@ -50,12 +52,13 @@ var TV = [
 
 /* ---------- 2. YOUTUBE LIVE ---------- */
 var YOUTUBE = [
-  { nama:'Awani', kat:'Berita', jenis:'iframe', logo:'https://i.imgur.com/RzNTkWo.png', url:ytLive('mkVyNaGee8A') },
-  { nama:'Makkah Live', kat:'Antarabangsa', jenis:'iframe', logo:'https://i.imgur.com/49Hodhz.png', url:ytLive('D6UqW6TuY74') },
-  { nama:'Tom & Jerry', kat:'Kanak-Kanak', jenis:'iframe', logo:'https://i.imgur.com/k25OHIf.png', url:ytLive('rEKifG2XUZg') },
-  { nama:'Pops Anime', kat:'Kanak-Kanak', jenis:'iframe', logo:'https://i.imgur.com/7TU6z4o.png', url:ytLive('o4iYsW2E6FY') },
-  { nama:'Marvel HQ', kat:'Kanak-Kanak', jenis:'iframe', logo:'https://i.imgur.com/F04jnsF.png', url:ytLive('YbQwgoMoztA') },
-  { nama:'Warner Bros Entertainment', kat:'Wayang', jenis:'iframe', logo:'https://i.imgur.com/aszsClS.png', url:ytLive('G43NInZfoPE') }
+  /* Telah ditukar ke jenis 'm3u8' dan guna fungsi ytRawStream */
+  { nama:'Awani', kat:'Berita', jenis:'m3u8', logo:'https://i.imgur.com/RzNTkWo.png', url:ytRawStream('mkVyNaGee8A') },
+  { nama:'Makkah Live', kat:'Antarabangsa', jenis:'m3u8', logo:'https://i.imgur.com/49Hodhz.png', url:ytRawStream('D6UqW6TuY74') },
+  { nama:'Tom & Jerry', kat:'Kanak-Kanak', jenis:'m3u8', logo:'https://i.imgur.com/k25OHIf.png', url:ytRawStream('rEKifG2XUZg') },
+  { nama:'Pops Anime', kat:'Kanak-Kanak', jenis:'m3u8', logo:'https://i.imgur.com/7TU6z4o.png', url:ytRawStream('o4iYsW2E6FY') },
+  { nama:'Marvel HQ', kat:'Kanak-Kanak', jenis:'m3u8', logo:'https://i.imgur.com/F04jnsF.png', url:ytRawStream('YbQwgoMoztA') },
+  { nama:'Warner Bros Entertainment', kat:'Wayang', jenis:'m3u8', logo:'https://i.imgur.com/aszsClS.png', url:ytRawStream('G43NInZfoPE') }
 ];
 
 /* ---------- 3. FILEM ----------
