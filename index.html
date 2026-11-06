@@ -188,7 +188,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v10</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v11</span></footer>
   </main>
 </div>
 
@@ -376,6 +376,7 @@ var YTKawal = (function () {
               } else if (e.data === S.PAUSED) {
                 panggil('onJeda');
               } else if (e.data === S.BUFFERING) {
+                panggil('onTunggu');
                 tmrTersekat = setTimeout(function () {
                   panggil('onRalat', 'Siaran tersekat terlalu lama.', false);
                 }, 20000);
@@ -454,7 +455,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v10';
+var DKTV_VERSI = 'v11';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -588,7 +589,12 @@ function gunaPilihanCC() {
 /* YouTube memaparkan tajuk, logo dan "More videos" selama ~3 saat setiap kali video
    mula, disambung atau dilompat. Jadi bila itu berlaku, tutupan DK TV dipaparkan sekejap,
    dan video dilompat 3 saat ke belakang supaya tiada babak yang terlepas. */
-var tungguTutup = false, MUNDUR_SAAT = 3;
+/* ===== TETAPAN TUTUPAN (ubah nombor di sini jika mahu lebih lama / pendek) ===== */
+var TUTUP_AWAL   = 8000;   /* ms: tutupan bila filem / siaran mula dimainkan */
+var MUNDUR_SAAT  = 6;      /* saat: tutupan selepas jeda / sambung / seret bar (filem diundur sama banyak, tiada babak terlepas) */
+var TUTUP_LIVE   = 6000;   /* ms: tutupan selepas siaran langsung sambung semula dari loading */
+var TUTUP_TUNGGU = 4000;   /* ms: tutupan selepas filem loading sendiri (internet perlahan) */
+var tungguTutup = false;
 function tutupSeketika(ms, siap) {
   clearTimeout(tmrMuat);
   pemainEl.classList.add('memuat');
@@ -597,7 +603,7 @@ function tutupSeketika(ms, siap) {
 function lompatVod(saat) {
   if (!yt) return;
   tungguTutup = true;
-  tutupSeketika(10000);                       /* had keselamatan; dibuang lebih awal bila video bermain */
+  tutupSeketika(20000);                       /* had keselamatan; dibuang lebih awal bila video bermain */
   yt.lompat(Math.max(0, saat - MUNDUR_SAAT));
   yt.main();
 }
@@ -825,8 +831,8 @@ function main(i, klik, ulang, ep) {
       iframe.onload = null; iframe.style.display = 'none'; iframe.src = 'about:blank';
       /* Tutup paparan awal YouTube (tajuk, "More videos") sehingga video benar-benar bermain */
       pemainEl.classList.add('memuat');
-      tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 10000);   /* had keselamatan */
-      var pertama = true;
+      tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 20000);   /* had keselamatan */
+      var pertama = true, tungguSendiri = false;
       if (vod) {
         /* Filem / siri: kawalan DK TV sendiri (tiada tajuk, logo atau "More videos" YouTube) */
         pemainEl.classList.add('ytvod');
@@ -843,18 +849,28 @@ function main(i, klik, ulang, ep) {
           if (vod) {
             pemainEl.classList.remove('jeda'); labelMainVod(true);
             if (pertama) {
-              pertama = false;
+              pertama = false; tungguSendiri = false;
               /* tunggu tajuk awal YouTube hilang (tiada lompat semula: lompat juga memaparkan tajuk) */
-              tutupSeketika(4500, function () { if (id === idMuat) gunaPilihanCC(); });
+              tutupSeketika(TUTUP_AWAL, function () { if (id === idMuat) gunaPilihanCC(); });
             } else if (tungguTutup) {
-              tungguTutup = false;
+              tungguTutup = false; tungguSendiri = false;
               tutupSeketika(MUNDUR_SAAT * 1000 + 300);   /* selepas lompat / sambung */
+            } else if (tungguSendiri) {
+              tungguSendiri = false;
+              tutupSeketika(TUTUP_TUNGGU);               /* selepas loading sendiri */
             }
             return;
           }
+          /* Siaran langsung: tutupan kekal sehingga tajuk / logo YouTube hilang */
+          if (pertama) { pertama = false; tungguSendiri = false; tutupSeketika(TUTUP_AWAL); }
+          else if (tungguSendiri || pemainEl.classList.contains('memuat')) { tungguSendiri = false; tutupSeketika(TUTUP_LIVE); }
+        },
+        onTunggu: function () {
+          if (id !== idMuat || pertama) return;   /* permulaan sudah ditutup */
+          /* Loading di tengah tontonan: terus tutup skrin sehingga video bermain semula */
           clearTimeout(tmrMuat);
-          /* tajuk YouTube muncul beberapa saat selepas video mula: tunggu ia hilang dahulu */
-          tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 4500);
+          pemainEl.classList.add('memuat');
+          if (!tungguTutup) tungguSendiri = true;
         },
         onJeda: function () {
           if (id !== idMuat) return;
@@ -862,7 +878,7 @@ function main(i, klik, ulang, ep) {
           /* Siaran langsung tidak patut dijeda. Bila dijeda, YouTube memaparkan tajuk dan "More videos",
              jadi tunjuk tutupan DK TV dan sambung main semula secara automatik. */
           clearTimeout(tmrMuat);
-          pemainEl.classList.add('memuat');
+          pemainEl.classList.add('memuat'); tungguSendiri = true;
           setTimeout(function () { if (yt && id === idMuat) yt.main(); }, 300);
         },
         onBisuPaksa: function () {
