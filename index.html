@@ -188,7 +188,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v11</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v12</span></footer>
   </main>
 </div>
 
@@ -326,7 +326,7 @@ var YTKawal = (function () {
     var langsung = pilihan.langsung !== undefined ? pilihan.langsung : vars.controls === 0;
     var pemain = null, sedia = false, dimusnah = false;
     var bisu = vars.mute === 1;
-    var tmrTersekat = null;
+    var tmrTersekat = null, modulCC = 'captions';
 
     function panggil(nama, a, b) {
       if (!dimusnah && typeof pilihan[nama] === 'function') pilihan[nama](a, b);
@@ -414,16 +414,25 @@ var YTKawal = (function () {
       tempoh: function () { return sedia && pemain.getDuration ? pemain.getDuration() || 0 : 0; },
       lompat: function (saat) { if (sedia) pemain.seekTo(Math.max(0, saat), true); },
       /* Sari kata (CC): modul 'captions' pemain YouTube */
-      muatSarikata: function () { if (!sedia) return; try { pemain.loadModule('captions'); } catch (e) {} },
+      muatSarikata: function () {
+        if (!sedia) return;
+        try { pemain.loadModule('captions'); } catch (e) {}
+        try { pemain.loadModule('cc'); } catch (e) {}
+      },
       senaraiSarikata: function () {
         if (!sedia) return [];
-        try { return pemain.getOption('captions', 'tracklist') || []; } catch (e) { return []; }
+        var hasil = [];
+        ['captions', 'cc'].some(function (m) {
+          try { var t = pemain.getOption(m, 'tracklist'); if (t && t.length) { hasil = t; modulCC = m; return true; } } catch (e) {}
+          return false;
+        });
+        return hasil;
       },
       pilihSarikata: function (trek) {
         if (!sedia) return;
         try {
-          if (trek) { pemain.loadModule('captions'); pemain.setOption('captions', 'track', trek); }
-          else pemain.setOption('captions', 'track', {});
+          if (trek) { pemain.loadModule(modulCC); pemain.setOption(modulCC, 'track', trek); }
+          else pemain.setOption(modulCC, 'track', {});
         } catch (e) {}
       },
       sedangMain: function () { return sedia && pemain.getPlayerState() === window.YT.PlayerState.PLAYING; },
@@ -455,7 +464,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v11';
+var DKTV_VERSI = 'v12';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -557,12 +566,14 @@ function bukaMenuCC() {
   if (trek.length) { binaMenuCC(trek); return; }
   binaMenuCC([], true);
   yt.muatSarikata();   /* senarai bahasa hanya tersedia selepas modul sari kata dimuatkan */
-  var idNow = idMuat;
-  setTimeout(function () {
+  var idNow = idMuat, kali = 0;
+  (function semak() {
     if (!yt || idNow !== idMuat) return;
+    var t = yt.senaraiSarikata();
+    if (!t.length && ++kali < 12) { setTimeout(semak, 500); return; }   /* cuba sehingga 6 saat */
     if (!ccAktif) yt.pilihSarikata(null);   /* muat senarai sahaja, jangan hidupkan */
-    if ($('menuCC').classList.contains('buka')) binaMenuCC(yt.senaraiSarikata());
-  }, 1500);
+    if ($('menuCC').classList.contains('buka')) binaMenuCC(t);
+  })();
 }
 function pilihCC(n) {
   var t = n === '' ? null : ccTrek[+n];
@@ -577,13 +588,15 @@ function gunaPilihanCC() {
   if (!ccPilihan || !yt || !yt.muatSarikata) return;
   var idNow = idMuat;
   yt.muatSarikata();
-  setTimeout(function () {
+  var kali = 0;
+  (function semak() {
     if (!yt || idNow !== idMuat) return;
     var trek = yt.senaraiSarikata(), dapat = null;
+    if (!trek.length && ++kali < 12) { setTimeout(semak, 500); return; }
     trek.forEach(function (t) { if (t.languageCode === ccPilihan && (!dapat || dapat.kind === 'asr')) dapat = t; });
     yt.pilihSarikata(dapat);
     ccAktif = dapat ? dapat.languageCode : null; tandaCC();
-  }, 1500);
+  })();
 }
 
 /* YouTube memaparkan tajuk, logo dan "More videos" selama ~3 saat setiap kali video
