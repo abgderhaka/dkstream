@@ -188,3 +188,7 @@ html.tv .kad:focus-visible { transform:scale(1.06); box-shadow:0 0 2rem rgba(247
 /* Telefon: sembunyi butang skrin penuh di bar atas (ada dalam kawalan pemain) */
 @media (max-width:760px) { #btnPenuhAtas { display:none; } }
 @media (max-width:760px) { .pil-nav { padding:0 .85rem; gap:.4rem; font-size:.88rem; height:2.5rem; } .menu-atas { gap:.45rem; } }
+
+/* Kurangkan bar terapung yang ditambah oleh pelayar (muat turun, PiP) pada video */
+#skrin-tv { pointer-events:none; -webkit-touch-callout:none; user-select:none; }
+#skrin-tv::-webkit-media-controls, #skrin-tv::-webkit-media-controls-enclosure { display:none !important; }
