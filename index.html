@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#060504">
 <title>DK TV Premium</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+<script src="yt-kawal.js"></script>
 <script>
 /* Muat style.css dengan cap masa supaya perubahan gaya terus sampai */
 (function () {
@@ -122,6 +123,7 @@ var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
 var statusEl = $('status'), bunyiBtn = $('bunyi'), kualitiEl = $('kualiti');
 var hls = null, cuba = 0, bisu = true, tmrMuat = null, mahuBunyi = true, sudahGerak = false;
+var yt = null;   /* pemain YouTube aktif (yt-kawal.js) */
 var semasa = -1, tapis = 'semua', carian = '', fav = [];
 var bhg = 'tv', epSemasa = -1;   /* bhg: bahagian aktif; epSemasa: episod siri yang sedang main */
 var idMuat = 0, segarBaru = 0;   /* idMuat: tolak keputusan lama bila saluran ditukar; segarBaru: kiraan ambil token baharu automatik */
@@ -148,7 +150,9 @@ function mulaMain() {
 
 function setBunyi(hidup) {
   bisu = !hidup;
-  if (semasa >= 0 && saluran[semasa].jenis === 'iframe') {
+  if (yt) {
+    yt.bisu(bisu);                                   /* YouTube: melalui IFrame Player API */
+  } else if (semasa >= 0 && saluran[semasa].jenis === 'iframe') {
     iframe.contentWindow.postMessage(JSON.stringify({ event:'command', func: hidup ? 'unMute' : 'mute', args:[] }), '*');
   } else {
     video.muted = bisu;
@@ -279,6 +283,7 @@ function kemasKini() {
 
 /* ---------- Pemain ---------- */
 function hentiHls() { if (hls) { hls.destroy(); hls = null; } video.onerror = null; video.removeAttribute('src'); video.load(); }
+function hentiYt() { if (yt) { yt.musnah(); yt = null; } }
 
 function gabung(a, b) { var o = {}, k; for (k in a) o[k] = a[k]; for (k in b) o[k] = b[k]; return o; }
 
@@ -306,7 +311,7 @@ function main(i, klik, ulang, ep) {
   var id = ++idMuat;
   if (!ulang) segarBaru = 0;
   senarai(); kemasKini(); binaEpisod(i);
-  hentiHls(); cuba = 0;
+  hentiHls(); hentiYt(); cuba = 0;
   clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
 
   pemainEl.classList.add('main');
@@ -321,11 +326,53 @@ function main(i, klik, ulang, ep) {
   kualitiEl.style.display = 'none'; kualitiEl.innerHTML = '';
 
   if (s.jenis === 'iframe') {
-    video.style.display = 'none'; iframe.style.display = 'block'; papar('');
-    /* Tutup paparan awal YouTube (tajuk, "More videos") semasa video dimuatkan */
+    video.style.display = 'none'; papar('');
+
+    /* YouTube: guna IFrame Player API supaya butang DK TV boleh mengawalnya */
+    if (window.YTKawal && YTKawal.adakahYouTube(s.url)) {
+      iframe.onload = null; iframe.style.display = 'none'; iframe.src = 'about:blank';
+      /* Tutup paparan awal YouTube (tajuk, "More videos") sehingga video benar-benar bermain */
+      if (!vod) {
+        pemainEl.classList.add('memuat');
+        tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 10000);   /* had keselamatan */
+      }
+      yt = YTKawal.mainkan(pemainEl, denganBunyi ? s.url.replace('mute=1', 'mute=0') : s.url, {
+        langsung: !vod,
+        onMain: function () {
+          if (id !== idMuat) return;
+          segarBaru = 0; papar('');
+          clearTimeout(tmrMuat);
+          tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 2500);
+        },
+        onBisuPaksa: function () {
+          if (id !== idMuat) return;
+          bisu = true; bunyiLabel();   /* pelayar senyapkan video: tunjuk ikon bisu, pengguna boleh tekan untuk bunyi */
+        },
+        onTamat: function (m) {
+          if (id !== idMuat) return;
+          clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
+          papar(m, true);
+        },
+        onRalat: function (m, kekal) {
+          if (id !== idMuat) return;
+          clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
+          if (!kekal && segarBaru < 2) {
+            segarBaru++;
+            papar('Sambungan YouTube terganggu, mencuba semula (' + segarBaru + '/2)...', true);
+            main(i, false, true);
+            return;
+          }
+          papar(s.nama + ': ' + m, true);
+        }
+      });
+      return;
+    }
+
+    /* iframe lain (bukan YouTube): cara lama */
+    iframe.style.display = 'block';
     if (!vod) pemainEl.classList.add('memuat');
     iframe.onload = function () { tmrMuat = setTimeout(function () { pemainEl.classList.remove('memuat'); }, 4500); };
-    iframe.src = denganBunyi ? s.url.replace('mute=1', 'mute=0') : s.url;
+    iframe.src = s.url;
     return;
   }
   iframe.onload = null; iframe.style.display = 'none'; iframe.src = 'about:blank'; video.style.display = 'block';
@@ -450,9 +497,13 @@ kualitiEl.addEventListener('change', function () { kualitiEl.blur(); });
 
 kualitiEl.addEventListener('change', function () { if (hls) hls.currentLevel = parseInt(kualitiEl.value, 10); });
 $('kiniFav').addEventListener('click', function () { if (semasa >= 0) togolFav(saluran[semasa].nama); });
+
+/* Skrin penuh pada bingkai pemain (butang & logo DK TV kekal kelihatan).
+   iPhone: saluran video guna skrin penuh asli iOS; YouTube guna skrin penuh cara CSS. */
 function skrinPenuh() {
-  if (document.fullscreenElement) document.exitFullscreen();
-  else if (pemainEl.requestFullscreen) pemainEl.requestFullscreen();
+  var bolehDiv = pemainEl.requestFullscreen || pemainEl.webkitRequestFullscreen;
+  if (!bolehDiv && !yt && video.style.display !== 'none' && video.webkitEnterFullscreen) { video.webkitEnterFullscreen(); return; }
+  YTKawal.skrinPenuh(pemainEl);
 }
 $('btnPenuh').addEventListener('click', skrinPenuh);
 $('btnPenuhAtas').addEventListener('click', skrinPenuh);
