@@ -75,6 +75,10 @@
 @media (orientation:portrait) {
   .pemain.yt-penuh-css { width:100vh !important; height:100vw !important; transform-origin:top left; transform:rotate(90deg) translateY(-100%); }
 }
+/* Mod iklan: bila YouTube memainkan iklan, pemain YouTube boleh disentuh supaya butang
+   "Skip Ad" / "Langkau" boleh ditekan. Tutupan dan bar DK TV disembunyikan sementara. */
+.pemain.iklan .sekat, .pemain.iklan .penutup, .pemain.iklan .bar-vod, .pemain.iklan .layar-jeda { display:none !important; }
+.pemain.iklan .yt-slot, .pemain.iklan .yt-slot iframe { pointer-events:auto !important; }
 .ep-btn.ep-next { margin-left:auto; color:#2a1c00; border-color:var(--emas2, #ffe28a); background:var(--kilau); }
 </style>
 </head>
@@ -196,7 +200,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v13</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v14</span></footer>
   </main>
 </div>
 
@@ -444,6 +448,7 @@ var YTKawal = (function () {
         } catch (e) {}
       },
       sedangMain: function () { return sedia && pemain.getPlayerState() === window.YT.PlayerState.PLAYING; },
+      keadaan: function () { try { return sedia ? pemain.getPlayerState() : -1; } catch (e) { return -1; } },
       adakahBisu: function () { return bisu; },
       kelantangan: function (n) {
         if (!sedia) return;
@@ -472,7 +477,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v13';
+var DKTV_VERSI = 'v14';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -606,6 +611,28 @@ function gunaPilihanCC() {
     ccAktif = dapat ? dapat.languageCode : null; tandaCC();
   })();
 }
+
+/* ---------- Pengesan iklan YouTube ----------
+   Semasa iklan, masa video utama tidak bergerak walaupun pemain tidak dijeda.
+   Bila itu berlaku lebih 2.5 saat, mod iklan dihidupkan supaya penonton boleh tekan "Skip Ad". */
+var tmrIklan = null, masaLepas = -1, kiraanBeku = 0;
+function mulaPengesanIklan() {
+  clearInterval(tmrIklan); masaLepas = -1; kiraanBeku = 0; pemainEl.classList.remove('iklan');
+  tmrIklan = setInterval(function () {
+    if (!yt || !yt.keadaan) return;
+    var k = yt.keadaan(), t = yt.masa();
+    var bergerak = Math.abs(t - masaLepas) > 0.05;
+    masaLepas = t;
+    if (bergerak && k === 1) {                       /* video utama sedang bermain */
+      if (pemainEl.classList.contains('iklan')) { pemainEl.classList.remove('iklan'); tutupSeketika(MUNDUR_SAAT * 1000); }
+      kiraanBeku = 0; return;
+    }
+    /* YouTube melaporkan "sedang main" semasa iklan, tetapi masa video utama tidak bergerak */
+    if (k !== 1 || pemainEl.classList.contains('jeda')) { kiraanBeku = 0; return; }
+    if (++kiraanBeku >= 5) pemainEl.classList.add('iklan');   /* 5 x 500ms = 2.5 saat */
+  }, 500);
+}
+function hentiPengesanIklan() { clearInterval(tmrIklan); pemainEl.classList.remove('iklan'); }
 
 /* YouTube memaparkan tajuk, logo dan "More videos" selama ~3 saat setiap kali video
    mula, disambung atau dilompat. Jadi bila itu berlaku, tutupan DK TV dipaparkan sekejap,
@@ -797,7 +824,7 @@ function kemasKini() {
 
 /* ---------- Pemain ---------- */
 function hentiHls() { if (hls) { hls.destroy(); hls = null; } video.onerror = null; video.removeAttribute('src'); video.load(); }
-function hentiYt() { if (yt) { yt.musnah(); yt = null; } }
+function hentiYt() { hentiPengesanIklan(); if (yt) { yt.musnah(); yt = null; } }
 
 function gabung(a, b) { var o = {}, k; for (k in a) o[k] = a[k]; for (k in b) o[k] = b[k]; return o; }
 
@@ -829,7 +856,7 @@ function main(i, klik, ulang, ep) {
   if (!ulang) segarBaru = 0;
   senarai(); kemasKini(); binaEpisod(i);
   hentiHls(); hentiYt(); cuba = 0; tutupRalatSkrin(); batalAutoNext();
-  clearInterval(tmrBar); pemainEl.classList.remove('ytvod', 'jeda', 'ada-kualiti');
+  clearInterval(tmrBar); pemainEl.classList.remove('ytvod', 'jeda', 'ada-kualiti'); hentiPengesanIklan();
   tutupMenuCC(); ccAktif = null; tandaCC(); tungguTutup = false;
   clearTimeout(tmrMuat); pemainEl.classList.remove('memuat');
 
@@ -862,6 +889,7 @@ function main(i, klik, ulang, ep) {
         labelMainVod(true);
         tmrBar = setInterval(kemaskiniBar, 500);
       }
+      mulaPengesanIklan();
       yt = YTKawal.mainkan(pemainEl, denganBunyi ? s.url.replace('mute=1', 'mute=0') : s.url, {
         langsung: !vod,
         onMain: function () {
