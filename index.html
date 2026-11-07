@@ -208,7 +208,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v17</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v18</span></footer>
   </main>
 </div>
 
@@ -482,7 +482,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v17';
+var DKTV_VERSI = 'v18';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -628,6 +628,7 @@ function mulaPengesanIklan() {
     var k = yt.keadaan(), t = yt.masa();
     var bergerak = Math.abs(t - masaLepas) > 0.05;
     masaLepas = t;
+    console.log('[iklan]', 'keadaan', k, '| masa', t.toFixed(2), '| beku', kiraanBeku, '| mod iklan', pemainEl.classList.contains('iklan'));   /* LOG SEMENTARA: buang selepas siap uji */
     if (bergerak && k === 1) {                       /* video utama sedang bermain */
       if (pemainEl.classList.contains('iklan')) { pemainEl.classList.remove('iklan'); tutupSeketika(MUNDUR_SAAT * 1000); }
       kiraanBeku = 0; return;
