@@ -81,18 +81,18 @@ var FILEM = [
 
 var SIRI = [
   {
-    nama:'Siri Contoh',
-    kat:'Animasi',
+    nama:'GERAK KHAS 2.0',
+    kat:'DK-MALAY',
     jenis:'mp4',
-    logo:'',
+    logo:'https://vvww.ohflix.my.id/uploads/video_thumb/25407.jpg',
     episod:[
       {
         tajuk:'Episod 1',
-        url:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+        url:'https://ohflix3.s3.us-east-005.backblazeb2.com/Random+Drama+Malay40/Gerak+Khas+2.0/Gerak+Khas+2.0+EP01.mp4'
       },
       {
         tajuk:'Episod 2',
-        url:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4'
+        url:'https://ohflix3.s3.us-east-005.backblazeb2.com/Random+Drama+Malay40/Gerak+Khas+2.0/Gerak+Khas+2.0+EP02.mp4'
       }
     ]
   }
