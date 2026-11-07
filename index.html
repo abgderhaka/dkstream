@@ -208,7 +208,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v21</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v22</span></footer>
   </main>
 </div>
 
@@ -482,7 +482,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v21';
+var DKTV_VERSI = 'v22';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -1127,11 +1127,28 @@ function kunciLandskap() {
 function lepasLandskap() {
   try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
 }
+/* Ingat kedudukan scroll sebelum skrin penuh, supaya selepas keluar laman kembali ke tengah,
+   tidak tersasar ke tepi atau kekal ter-zoom akibat putaran landskap */
+var yTerakhir = 0, yPenuh = 0, dalamPenuh = false;
+window.addEventListener('scroll', function () { if (!dalamPenuh) yTerakhir = window.scrollY; }, { passive:true });
+function pulihSelepasPenuh() {
+  var meta = document.querySelector('meta[name=viewport]'), asal = meta ? meta.content : '';
+  if (meta) meta.content = asal + ', maximum-scale=1';   /* buang zoom yang tertinggal */
+  [50, 300, 700].forEach(function (t) {
+    setTimeout(function () { window.scrollTo(0, yPenuh); document.documentElement.scrollLeft = 0; document.body.scrollLeft = 0; }, t);
+  });
+  setTimeout(function () { if (meta) meta.content = asal; }, 900);   /* pulihkan: pengguna boleh zoom semula */
+}
 ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) {
   document.addEventListener(ev, function () {
     var el = document.fullscreenElement || document.webkitFullscreenElement;
-    if (el && telefon()) kunciLandskap();
-    if (!el) lepasLandskap();
+    if (el) {
+      if (!dalamPenuh) { dalamPenuh = true; yPenuh = yTerakhir; }
+      if (telefon()) kunciLandskap();
+    } else {
+      lepasLandskap();
+      if (dalamPenuh) { dalamPenuh = false; pulihSelepasPenuh(); }
+    }
   });
 });
 
