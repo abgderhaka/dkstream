@@ -69,10 +69,6 @@
 /* Filem / siri m3u8: pilihan resolusi di penjuru atas kanan (kawalan asli kekal di bawah) */
 .pemain.vod.ada-kualiti .alat { display:flex !important; top:.8rem; bottom:auto; }
 .pemain.vod .alat .abtn { display:none; }
-/* Filem / siri mp4 & m3u8: butang skrin penuh asli disembunyikan (controlslist), jadi guna butang DK TV
-   yang memakai mod CSS pada telefon: tiada amaran "To exit full screen" Chrome */
-.pemain.vod:not(.ytvod) .alat { display:flex !important; top:.8rem; bottom:auto; }
-.pemain.vod:not(.ytvod) .alat #btnPenuh { display:inline-flex; }
 /* Skrin penuh: pemain memenuhi seluruh skrin (tiada bingkai emas, tiada nisbah 16:9 tetap) */
 .pemain:fullscreen { width:100% !important; height:100% !important; max-width:none; aspect-ratio:auto !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; background:#000; }
 .pemain:-webkit-full-screen { width:100% !important; height:100% !important; max-width:none; aspect-ratio:auto !important; border:0 !important; border-radius:0 !important; box-shadow:none !important; background:#000; }
@@ -132,7 +128,7 @@
     <div class="atas-main">
       <div>
         <div class="pemain" id="pemain">
-          <video id="skrin-tv" autoplay muted playsinline disablepictureinpicture disableremoteplayback controlslist="nofullscreen nodownload noremoteplayback" oncontextmenu="return false"></video>
+          <video id="skrin-tv" autoplay muted playsinline disablepictureinpicture disableremoteplayback oncontextmenu="return false"></video>
           <iframe id="skrin-iframe" allow="autoplay; encrypted-media"></iframe>
           <div class="sekat"></div>
           <div class="penutup"><span class="pusing"></span></div>
@@ -212,7 +208,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v19</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v20</span></footer>
   </main>
 </div>
 
@@ -486,7 +482,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v19';
+var DKTV_VERSI = 'v20';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
