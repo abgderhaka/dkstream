@@ -198,7 +198,8 @@ var KATEGORI = [
   'Drama',
   'Seram',
   'Dokumentari',
-  'DK-ENGLISH'
+  'DK-ENGLISH',
+  'DK-MALAY'
 ];
 
 /* =================================================== */
