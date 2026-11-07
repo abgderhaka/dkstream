@@ -16,5 +16,10 @@
     "auto": true
    }
   ]
+ },
+ "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4": {
+  "nama": "Siri Contoh - Episod 1",
+  "gagal": 1,
+  "ralat": "Command '['ffmpeg', '-nostdin', '-loglevel', 'error', '-y', '-user_agent', 'Mozilla/5.0', '-i', 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', '-vn', '-ac', '1',"
  }
 }
