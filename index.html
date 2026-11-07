@@ -208,7 +208,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v22</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v23</span></footer>
   </main>
 </div>
 
@@ -482,7 +482,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v22';
+var DKTV_VERSI = 'v23';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -1159,30 +1159,34 @@ function sudahPwa() {
   } catch (e) { return false; }
 }
 
+/* Skrin penuh SAMA untuk semua jenis siaran (YouTube filem / live, m3u8, mp4, iframe):
+   skrin penuh sebenar pada bingkai pemain. Telefon terus berputar ke landskap, butang yang
+   sama (atau Back) keluar, dan laman kembali ke tengah (lihat pulihSelepasPenuh).
+   Mod CSS hanya digunakan jika pelayar tiada Fullscreen API (contohnya iPhone). */
+function penuhCss() {
+  var hidup = pemainEl.classList.toggle('yt-penuh-css');
+  document.body.style.overflow = hidup ? 'hidden' : '';
+  if (hidup) history.pushState({ dkPenuh: 1 }, '');
+  else if (history.state && history.state.dkPenuh) history.back();
+}
 function skrinPenuh() {
-  /* Semua telefon (Chrome biasa dan PWA): gunakan mod CSS.
-     Jangan panggil Fullscreen API Android supaya notifikasi sistem Chrome
-     "To exit full screen" tidak dicetuskan oleh butang DK TV. */
-  if (telefon()) {
-    var hidup = pemainEl.classList.toggle('yt-penuh-css');
-    document.body.style.overflow = hidup ? 'hidden' : '';
-    if (hidup) {
-      history.pushState({ dkPenuh: 1 }, '');
-    } else if (history.state && history.state.dkPenuh) {
-      history.back();
-    }
+  var d = document;
+  if (d.fullscreenElement || d.webkitFullscreenElement) {          /* sedang skrin penuh: keluar */
+    (d.exitFullscreen || d.webkitExitFullscreen).call(d);
     return;
   }
-
-  /* Desktop / laptop: kekalkan Fullscreen API asal. */
-  var bolehDiv = pemainEl.requestFullscreen || pemainEl.webkitRequestFullscreen;
-  if (!bolehDiv && !yt && video.style.display !== 'none' && video.webkitEnterFullscreen) {
-    video.webkitEnterFullscreen();
-    return;
+  if (pemainEl.classList.contains('yt-penuh-css')) { penuhCss(); return; }   /* keluar mod CSS */
+  var minta = pemainEl.requestFullscreen || pemainEl.webkitRequestFullscreen;
+  if (minta) {
+    try {
+      var j = minta.call(pemainEl);
+      if (j && j.catch) j.catch(function () { penuhCss(); });
+      return;
+    } catch (e) { /* jatuh ke cara lain */ }
   }
-  if (window.YTKawal) YTKawal.skrinPenuh(pemainEl);
-  else if (document.fullscreenElement) document.exitFullscreen();
-  else if (pemainEl.requestFullscreen) pemainEl.requestFullscreen();
+  /* iPhone: <video> boleh skrin penuh asli; YouTube / iframe guna mod CSS */
+  if (!yt && video.style.display !== 'none' && video.webkitEnterFullscreen) { video.webkitEnterFullscreen(); return; }
+  penuhCss();
 }
 
 /* Butang Back telefon keluar daripada skrin penuh CSS */
