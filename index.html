@@ -208,7 +208,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v23</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v24</span></footer>
   </main>
 </div>
 
@@ -482,7 +482,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v23';
+var DKTV_VERSI = 'v24';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -829,7 +829,7 @@ function kemasKini() {
 }
 
 /* ---------- Pemain ---------- */
-function hentiHls() { if (hls) { hls.destroy(); hls = null; } video.onerror = null; video.removeAttribute('src'); video.load(); }
+function hentiHls() { if (hls) { hls.destroy(); hls = null; } buangSari(); video.onerror = null; video.removeAttribute('src'); video.load(); }
 function hentiYt() { hentiPengesanIklan(); if (yt) { yt.musnah(); yt = null; } }
 
 function gabung(a, b) { var o = {}, k; for (k in a) o[k] = a[k]; for (k in b) o[k] = b[k]; return o; }
@@ -1005,7 +1005,7 @@ function mulaSumber(s, i, url) {
       console.log('[DK TV] Ralat video:', s.nama, '| kod', kod, '|', e && e.message, '|', url);
       papar('Video tidak dapat dimainkan (kod ' + kod + '). ' + sebab, true);
     };
-    video.src = url; papar(''); mulaMain(); return;
+    video.src = url; papar(''); mulaMain(); pasangSari(s, idMuat); return;
   }
   if (window.Hls && Hls.isSupported()) {
     hls = new Hls({ enableWorker:true, maxBufferLength:30 });
@@ -1033,12 +1033,69 @@ function mulaSumber(s, i, url) {
       } else if (d.type === Hls.ErrorTypes.MEDIA_ERROR) { hls.recoverMediaError(); }
       else { papar('Siaran gagal dimainkan.', true); hentiHls(); }
     });
-    hls.loadSource(url); hls.attachMedia(video);
+    hls.loadSource(url); hls.attachMedia(video); pasangSari(s, idMuat);
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
     video.src = url;
     video.addEventListener('loadedmetadata', function () { papar(''); mulaMain(); }, { once:true });
+    pasangSari(s, idMuat);
   } else { papar('Pelayar anda tidak menyokong HLS.', true); }
 }
+
+/* ---------- Sari kata filem / siri mp4 & m3u8 ----------
+   Sumber: (1) sari kata auto dari GitHub Actions (sub/index.json), (2) sari:[...] manual dalam channel.js.
+   Dipaparkan dalam menu CC kawalan asli video (tiada butang baharu). Bahasa pilihan diingat
+   (kunci 'dk_cc', sama dengan CC YouTube), jadi filem seterusnya terus guna bahasa yang sama. */
+var SARI_AUTO = {}, sariBlob = [], abaiCC = 0;
+var sariSedia = fetch('sub/index.json?t=' + Date.now(), { cache:'no-store' })
+  .then(function (r) { return r.ok ? r.json() : {}; })
+  .then(function (j) { SARI_AUTO = j || {}; })
+  .catch(function () {});
+function buangSari() {
+  abaiCC = Date.now() + 800;
+  Array.prototype.slice.call(video.querySelectorAll('track')).forEach(function (t) { video.removeChild(t); });
+  sariBlob.forEach(function (u) { URL.revokeObjectURL(u); }); sariBlob = [];
+}
+function keVtt(t) {   /* terima .vtt atau .srt */
+  t = String(t || '').replace(/^\uFEFF/, '').replace(/\r/g, '').trim();
+  if (/^WEBVTT/.test(t)) return t;
+  return 'WEBVTT\n\n' + t.replace(/(\d\d:\d\d:\d\d),(\d\d\d)/g, '$1.$2');
+}
+function pasangSari(s, id) {
+  if (!s.vod) return;
+  sariSedia.then(function () {
+    if (id !== idMuat) return;
+    var senarai = [], dipapar = false;
+    (s.sari || []).forEach(function (x) {
+      if (x && x.url) senarai.push({ nama: x.bahasa || x.nama || x.kod || 'Sari kata', kod: x.kod || '', url: x.url });
+    });
+    var a = SARI_AUTO[s.url];
+    if (a && a.bahasa) a.bahasa.forEach(function (x) {
+      senarai.push({ nama: x.nama + (x.auto ? ' (auto)' : ''), kod: x.kod, url: 'sub/' + x.fail });
+    });
+    senarai.forEach(function (x) {
+      fetch(x.url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); }).then(function (teks) {
+        if (id !== idMuat) return;
+        var u = URL.createObjectURL(new Blob([keVtt(teks)], { type:'text/vtt' }));
+        sariBlob.push(u);
+        var tr = document.createElement('track');
+        tr.kind = 'subtitles'; tr.label = x.nama; if (x.kod) tr.srclang = x.kod; tr.src = u;
+        video.appendChild(tr);
+        abaiCC = Date.now() + 800;
+        var hidup = !dipapar && !!ccPilihan && x.kod === ccPilihan;
+        if (hidup) dipapar = true;
+        tr.track.mode = hidup ? 'showing' : 'disabled';
+      }).catch(function (e) { console.log('[DK TV] Sari kata gagal dimuat:', x.url, e.message); });
+    });
+  });
+}
+/* Pengguna pilih / matikan sari kata dalam menu CC video: ingat pilihan */
+video.textTracks.addEventListener('change', function () {
+  if (Date.now() < abaiCC) return;
+  var on = null;
+  for (var k = 0; k < video.textTracks.length; k++) if (video.textTracks[k].mode === 'showing') on = video.textTracks[k];
+  ccPilihan = on ? (on.language || null) : null;
+  try { if (ccPilihan) localStorage.setItem('dk_cc', ccPilihan); else localStorage.removeItem('dk_cc'); } catch (e) {}
+});
 
 /* ---------- Butang & carian ---------- */
 bunyiBtn.addEventListener('click', function () {
