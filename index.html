@@ -208,7 +208,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v20</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v21</span></footer>
   </main>
 </div>
 
@@ -482,7 +482,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v20';
+var DKTV_VERSI = 'v21';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -1130,12 +1130,6 @@ function lepasLandskap() {
 ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) {
   document.addEventListener(ev, function () {
     var el = document.fullscreenElement || document.webkitFullscreenElement;
-    /* Telefon: <video> masuk skrin penuh asli sendiri (putar telefon dsb.) -> keluar dan guna mod CSS DK TV */
-    if (el && el === video && telefon()) {
-      try { (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {}
-      if (!pemainEl.classList.contains('yt-penuh-css')) skrinPenuh();
-      return;
-    }
     if (el && telefon()) kunciLandskap();
     if (!el) lepasLandskap();
   });
