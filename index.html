@@ -208,7 +208,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v16</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v17</span></footer>
   </main>
 </div>
 
@@ -482,7 +482,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v16';
+var DKTV_VERSI = 'v17';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
@@ -993,7 +993,17 @@ function main(i, klik, ulang, ep) {
 
 function mulaSumber(s, i, url) {
   if (s.jenis === 'mp4' || /\.mp4(\?|#|$)/i.test(url)) {   /* fail video terus */
-    video.onerror = function () { papar('Video tidak dapat dimainkan. Semak pautan.', true); };
+    video.onerror = function () {
+      var e = video.error, kod = e ? e.code : 0;
+      var sebab = {
+        1: 'Muat turun dibatalkan.',
+        2: 'Masalah rangkaian: pautan mungkin disekat, tamat atau dihadkan (semak tab Network).',
+        3: 'Fail rosak atau gagal dinyahkod.',
+        4: 'Format/codec tidak disokong, atau pautan bukan fail video terus.'
+      }[kod] || 'Sebab tidak diketahui.';
+      console.log('[DK TV] Ralat video:', s.nama, '| kod', kod, '|', e && e.message, '|', url);
+      papar('Video tidak dapat dimainkan (kod ' + kod + '). ' + sebab, true);
+    };
     video.src = url; papar(''); mulaMain(); return;
   }
   if (window.Hls && Hls.isSupported()) {
