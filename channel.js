@@ -93,6 +93,10 @@ var SIRI = [
       {
         tajuk:'Episod 2',
         url:'https://ohflix3.s3.us-east-005.backblazeb2.com/Random+Drama+Malay40/Gerak+Khas+2.0/Gerak+Khas+2.0+EP02.mp4'
+      },
+      {
+        tajuk:'Episod 3',
+        url:'https://ohflix3.s3.us-east-005.backblazeb2.com/Random+Drama+Malay40/Gerak+Khas+2.0/Gerak+Khas+2.0+EP03.mp4'
       }
     ]
   }
