@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#060504">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
-<title>DK TV Premium</title>
+<title>DK PLUS</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
 <script>
 /* Muat style.css dengan cap masa supaya perubahan gaya terus sampai */
@@ -99,7 +99,7 @@
 <header class="atas">
   <div class="jenama">
     <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M17 5l7 7 7-7" fill="none" stroke="url(#emasG)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="12" width="40" height="30" rx="7" fill="none" stroke="url(#emasG)" stroke-width="3"/><path d="M20 20l10 7-10 7z" fill="url(#emasG)"/></svg>
-    <div class="jenama-nama">DK TV<b>PREMIUM</b></div>
+    <div class="jenama-nama">DK PLUS</div>
   </div>
 
   <nav class="menu-atas" aria-label="Menu utama">
@@ -138,7 +138,7 @@
             <button class="abtn" id="bunyi" type="button"></button>
             <button class="abtn" id="btnPenuh" type="button" aria-label="Skrin penuh" title="Skrin penuh"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
           </div>
-          <div class="kosong"><strong>Selamat datang ke DK TV</strong><span>Pilih saluran di bawah untuk mula menonton.</span></div>
+          <div class="kosong"><strong>Selamat datang ke DK PLUS</strong><span>Pilih saluran di bawah untuk mula menonton.</span></div>
           <div class="ralat-skrin" id="ralatSkrin" role="alert">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="14" rx="3"/><path d="M8 2.5l4 3.5 4-3.5"/><path d="M9.5 10.5l5 5"/><path d="M14.5 10.5l-5 5"/></svg>
             <strong id="ralatTajuk"></strong>
@@ -176,7 +176,7 @@
       <aside class="panel">
         <div class="promo">
           <div class="promo-atas">
-            <div class="jenama-nama">DK TV<b>PREMIUM</b></div>
+            <div class="jenama-nama">DK PLUS</div>
             <svg class="mahkota" viewBox="0 0 64 50" aria-hidden="true"><path d="M5 40L9 12l15 14L32 6l8 20 15-14 4 28z" fill="url(#emasG)"/><rect x="5" y="41" width="54" height="6" rx="2.5" fill="url(#emasG)"/></svg>
           </div>
           <h2>Streaming TV Tanpa Had!</h2>
@@ -208,7 +208,7 @@
       <div class="grid" id="grid"></div>
     </section>
 
-    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK TV. <span style="opacity:.5">v24</span></footer>
+    <footer>Gunakan pautan siaran yang anda miliki kebenaran untuk distrim. &copy; <span id="tahun"></span> DK PLUS. <span style="opacity:.5">v26</span></footer>
   </main>
 </div>
 
@@ -482,7 +482,7 @@ var YTKawal = (function () {
 
 </script>
 <script>
-var DKTV_VERSI = 'v24';
+var DKTV_VERSI = 'v26';
 console.log('[DK TV] index.html ' + DKTV_VERSI);
 var $ = function (id) { return document.getElementById(id); };
 var video = $('skrin-tv'), iframe = $('skrin-iframe'), pemainEl = $('pemain');
