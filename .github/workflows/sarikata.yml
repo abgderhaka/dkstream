@@ -1,0 +1,57 @@
+# DK TV: sari kata automatik (seperti auto-CC YouTube)
+# Berjalan sendiri bila channel.js dikemas kini, setiap hari jam 2 pagi (waktu Malaysia),
+# atau secara manual: tab Actions > Sari kata auto > Run workflow.
+name: Sari kata auto
+
+on:
+  push:
+    branches: [main]
+    paths: ['channel.js']
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sarikata
+  cancel-in-progress: false
+
+jobs:
+  jana:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Pasang ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Simpan model AI (supaya tidak dimuat turun setiap kali)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: model-whisper-nllb-v1
+
+      - name: Pasang Whisper dan penterjemah
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install faster-whisper transformers sentencepiece
+
+      - name: Senarai filem / episod daripada channel.js
+        run: node scripts/senarai-vod.js > /tmp/vod.json && cat /tmp/vod.json
+
+      - name: Jana sari kata
+        env:
+          SARI_BAHASA: ms,en      # bahasa terjemahan (kod 2 huruf), dipisah koma
+          WHISPER_MODEL: small    # tiny / base / small / medium (lebih besar = lebih tepat tapi lebih lambat)
+        run: python scripts/sarikata.py /tmp/vod.json
